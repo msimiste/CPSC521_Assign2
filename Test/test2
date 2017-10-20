@@ -1,0 +1,10 @@
+fun somefun (a,b,c) = 
+   let
+      fun sfun1 (x,y,z) = 
+          let 
+             fun sfun2 (p,q,r) = p * q *r
+          in sfun2 (a,x,y) + sfun2 (b,y,z)   
+
+      fun sub (y,z) = y - z
+   in 
+     sfun1 (a,b,c) + sub (b,c)
