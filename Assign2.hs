@@ -18,11 +18,12 @@ type AItem = (String, Int)
 type AList = ([AItem],Int)
     
 varList:: (Printer b) => (Prog a b) -> Int -> AList 
-varList (Prog a) num = theList where
+varList (Prog a) num = parseFuncVars vars num where
+    ((Fun (name, vars, exp)):funcs) = funList (Prog a) 
     --theList = foldr (\funcs acc -> parseFun funcs num) ([],0) nummap (\funcs -> parseFun funcs num) funs where
-    funs = funList (Prog a)
-    list1 = 
---foldl(\acc func -> parseFun (fst func) acc) 0 ([],0)
+    --funs = funList (Prog a)
+    --list1 = 
+--fo--ldl(\acc func -> parseFun (fst func) acc) 0 ([],0)
 
 --parseFuncVars vars num where
     --((Fun (name, vars, exp)):funcs) = funList (Prog a)
@@ -39,8 +40,8 @@ funList (Prog funcs) = funcs
 
 
 parseFun::(Printer b) => (Fun a b) -> Int -> AList 
-parseFun (Fun a) num = case a of
-    (name, vars, exp) -> parseFuncVars vars num 
+parseFun (Fun a) num = case (Fun a) of
+    Fun (name, vars, exp) -> parseFuncVars vars num 
 
 parseFuncVars::(Printer b) =>  [b] -> Int -> AList 
 parseFuncVars []  num = ([], num)
