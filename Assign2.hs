@@ -1,7 +1,7 @@
 import ParseProg
 import AST
 
-data Mexpression a b = BExp a b | Exp a b
+data Mexp a b = BExp a b | Exp a b
 
 
 --varList:: Mexpression -> [String]
@@ -22,22 +22,6 @@ varList (Prog a) num = ourList where
     --ourList = tail almostList where
         ourList = foldr(\func (acc,num) ->  parseFun func num)  ([],0)  funcs where
             funcs = funList (Prog a)
-    --parseFuncVars vars num where
-    --((Fun (name, vars, exp)):funcs) = funList (Prog a) 
-    --theList = foldr (\funcs acc -> parseFun funcs num) ([],0) nummap (\funcs -> parseFun funcs num) funs where
-    --funs = funList (Prog a)
-    --list1 = 
---fo--ldl(\acc func -> parseFun (fst func) acc) 0 ([],0)
-
---parseFuncVars vars num where
-    --((Fun (name, vars, exp)):funcs) = funList (Prog a)
-
---varList (Prog (Fun (name, vars, exp):funs)) num = parseFuncVars vars num 
-    --Prog (f:fs) -> case f of
-        --Fun (name,vars, exp) -> case vars  of
-           -- True -> parseVars vars num
-    --BExp a b -> False:(varList exp)
-    --Exp a b -> True:(varList exp) 
 
 funList:: (Prog a b) -> [Fun a b]
 funList (Prog funcs) = funcs
@@ -60,6 +44,9 @@ parseFuncVars (s:str) num = (aItems, number) where
 parseAItem:: (Printer b) =>  b -> Int -> AItem
 parseAItem s num = (printer s, num)
 --((((printer s),num):(parseVars str (num+1))),num)
+
+
+parseVars:: (Printer b) => (Mexp a b) -> Int -> AList
 
 
 fun1 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))])
