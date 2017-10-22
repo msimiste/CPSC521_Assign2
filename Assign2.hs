@@ -20,14 +20,14 @@ funList:: (Prog a b) -> [Fun a b]
 funList (Prog funcs) = funcs
 
 
-parseFun::(Printer b) => (Fun a b) -> Int -> AList 
+parseFun::(Printer b) => (Fun a b) -> Int -> AList -> AList
 parseFun (Fun a) num = case (Fun a) of
     Fun (name, args, exp) -> list where
         (flist, num1) = parseFuncArgs args num
         (slist, num2) = parseExp exp num1 
         list = (flist ++ slist, num2)
 
-parseFuncArgs::(Printer b) =>  [b] -> Int -> AList 
+parseFuncArgs::(Printer b) =>  [b] -> Int -> AList -> AList
 parseFuncArgs []  num = ([], num)
 parseFuncArgs (s:str) num = (aItems, number) where
     (aItems,number) = ([(parseAItem s num)] ++ fst (parseFuncArgs str (num+1)),num+2)     
@@ -36,7 +36,7 @@ parseAItem:: (Printer b) =>  b -> Int -> AItem
 parseAItem s num = (printer s, num)
 
 
-parseExp:: (Printer b) => (Exp a b) -> Int -> AList
+parseExp:: (Printer b) => (Exp a b) -> Int -> AList -> AList
 parseExp exp num = case exp of
     VAR exp -> ([parseAItem exp num],num+1)
     ADD exp1 exp2 -> list where
@@ -68,10 +68,9 @@ parseExp exp num = case exp of
         (slist, num2) = foldr(\func (acc,y) ->  parseFun func y)  ([],num1) funcs
         (tlist, num3) = parseExp exp2 num2
         list = (flist ++ slist ++ tlist, num3)
-         
+     
 
-
-parseBexp:: (Printer b) => (BExp a b) -> Int -> AList 
+parseBexp:: (Printer b) => (BExp a b) -> Int -> AList -> Alist
 parseBexp exp num = case exp of
     Lt exp1 exp2 -> list where
         (flist, num1) = parseExp exp1 num
@@ -100,7 +99,9 @@ parseBexp exp num = case exp of
 
 
 fun1 = (Prog [Fun ("main",["x","y"],(SUB (VAR "x") (VAR "y")))])
-       
+
+fun2 = (Prog [(Fun ("main",["x","y","z"], LET [Fun ("f", ["y"], ADD (VarAPP "g")])])
+         
 test3 = (Prog [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
              ,Fun ("f",["x"], (LET 
                    [Fun ("g",["y"],MUL (VAR "y") (VAR "x"))
