@@ -4,14 +4,6 @@ import AST
 data Mexp a b = BExp a b | Exp a b deriving Show
 
 
---varList:: Mexpression -> [String]
---varList m = case m of 
---    Exp a b 
-
-
---varList:: Fun a b -> ([String], [String])
---varList  Fun (a, b, c) = 
-
 type AItem = (String, Int)
 
 --data AList a = Alist ([AItem],Int) deriving Show
@@ -19,9 +11,9 @@ type AList = ([AItem],Int)
     
 varList:: (Printer b) => (Prog a b) -> Int -> AList 
 varList (Prog a) num = ourList where   
-        (ourList1, num1) = foldr(\(Fun (name,list,exps)) (acc,x) -> parseExp exps x) ([],num) funcs  where
-        (ourList2, num2) = foldr(\func (acc,y) ->  parseFun func y)  ([],num1)  funcs where
-        ourList = (ourList1 ++ ourList2, num1)
+        --(ourList1, num1) = foldr(\(Fun (name,list,exps)) (acc,x) -> parseExp exps x) ([],num) funcs 
+        (ourList2, num2) = foldr(\func (acc,y) ->  parseFun func y)  ([],num) funcs --foldr(\func (acc,y) ->  parseFun func y)  ([],num1) funcs 
+        ourList = (ourList2, num2)--(ourList1 ++ ourList2, num2)
         funcs = funList (Prog a)
 
 funList:: (Prog a b) -> [Fun a b]
@@ -30,82 +22,88 @@ funList (Prog funcs) = funcs
 
 parseFun::(Printer b) => (Fun a b) -> Int -> AList 
 parseFun (Fun a) num = case (Fun a) of
-    Fun (name, vars, exp) -> parseFuncVars vars num 
+    Fun (name, args, exp) -> list where
+        (flist, num1) = parseFuncArgs args num
+        (slist, num2) = parseExp exp num1 
+        list = (flist ++ slist, num2)
 
-parseFuncVars::(Printer b) =>  [b] -> Int -> AList 
-parseFuncVars []  num = ([], num)
-parseFuncVars (s:str) num = (aItems, number) where
-    (aItems,number) = ([(parseAItem s num)] ++ fst (parseFuncVars str (num+1)),num+2)
-     
---((map (\x -> parseAItem x (num+1)) str),num)
---((foldr(\x y -> map parseItem y x) num str),)
---((s,num)):(parseVars str num+1)
-
+parseFuncArgs::(Printer b) =>  [b] -> Int -> AList 
+parseFuncArgs []  num = ([], num)
+parseFuncArgs (s:str) num = (aItems, number) where
+    (aItems,number) = ([(parseAItem s num)] ++ fst (parseFuncArgs str (num+1)),num+2)     
 
 parseAItem:: (Printer b) =>  b -> Int -> AItem
 parseAItem s num = (printer s, num)
---((((printer s),num):(parseVars str (num+1))),num)
+
 
 parseExp:: (Printer b) => (Exp a b) -> Int -> AList
 parseExp exp num = case exp of
-    exp1 -> case exp1 of
-        VAR  exp -> ([parseAItem exp num],num+1)
-        ADD  exp2 exp3 -> list where
-            (flist, num1) = parseExp exp2 num
-            (slist, num2) = parseExp exp3 num1
+    VAR exp -> ([parseAItem exp num],num+1)
+    ADD exp1 exp2 -> list where
+            (flist, num1) = parseExp exp1 num
+            (slist, num2) = parseExp exp2 num1
             list = (flist ++ slist,num2)
-        --SUB  exp1 exp2 -> item where
-        --DIV  exp1 exp2 -> item where
-        --NEG  exp1 exp2 -> item where
-        --    (
-        --CONST num
-        --COND bexp exp1 exp2 -> ([],num)
-        --APP  a exps
-        --LET  funcs exp
---parseVars:: (Printer b) => (Mexp a b) -> Int -> AList
---parseVars exp num = case exp of
---    (BExp a)  -> case (BExp a) of
---        TRUE -> ([],num)
---        FALSE -> ([],num)
---        NOT (BExp exp1 exp2) -> parseVars (BExp exp1 exp2) num
---        Lt (Exp exp1 exp2) (Exp exp3 exp4) -> thisList where
---            (fList, num1) = parseVars (Exp exp1 exp2) num
---            (sList, num2) = parseVars (Exp exp3 exp4) num1
---            thisList = (fList ++ sList, num2)
---        Eq (Exp exp1 exp2) (Exp exp3 exp4) -> thisList where
---            (fList, num1) = parseVars (Exp exp1 exp2) num
---            (sList, num2) = parseVars (Exp exp3 exp4) num1
---            thisList = (fList ++ sList, num2)
---        AND (Exp exp1 exp2) (Exp exp3 exp4) -> thisList where
---            (fList, num1) = parseVars (Exp exp1 exp2) num
---            (sList, num2) = parseVars (Exp exp3 exp4) num1
---            thisList = (fList ++ sList, num2)
---        OR (Exp exp1 exp2) (Exp exp3 exp4) -> thisList where
---            (fList, num1) = parseVars (Exp exp1 exp2) num
---            (sList, num2) = parseVars (Exp exp3 exp4) num1
---            thisList = (fList ++ sList, num2)       
---    (Exp a b) -> case (Exp a b) of
---        VAR b -> parseAItem b num
---        ADD (Exp exp1 exp2) (Exp exp3 exp4) -> expList where
---            (fList2, num1) = parseVars (Exp exp1 exp2) num
---            (sList2, num2) = parseVars (Exp exp3 exp4) num1
---            expList = (fList2 ++ sList2, num2)
---        SUB(Exp exp1 exp2) (Exp exp3 exp4) -> expList where
---            (fList2, num1) = parseVars (Exp exp1 exp2) num
---            (sList2, num2) = parseVars (Exp exp3 exp4) num1
---            expList = (fList2 ++ sList2, num2)
---        MUL (Exp exp1 exp2) (Exp exp3 exp4) -> expList where
---            (fList2, num1) = parseVars (Exp exp1 exp2) num
---            (sList2, num2) = parseVars (Exp exp3 exp4) num1
---            expList = (fList2 ++ sList2, num2)
---        DIV (Exp exp1 exp2) (Exp exp3 exp4) -> expList where
---            (fList2, num1) = parseVars (Exp exp1 exp2) num
---            (sList2, num2) = parseVars (Exp exp3 exp4) num1
---            expList = (fList2 ++ sList2, num2)
---        NEG (Exp exp1 exp2) -> parseVars (Exp exp1 exp2) num
---        _ -> ([],num)
+    SUB exp1 exp2 -> list where    
+            (flist, num1) = parseExp exp1 num
+            (slist, num2) = parseExp exp2 num1
+            list = (flist ++ slist,num2)      
+    MUL exp1 exp2 -> list where    
+            (flist, num1) = parseExp exp1 num
+            (slist, num2) = parseExp exp2 num1
+            list = (flist ++ slist,num2)
+    DIV exp1 exp2 -> list where    
+            (flist, num1) = parseExp exp1 num
+            (slist, num2) = parseExp exp2 num1
+            list = (flist ++ slist,num2)
+    NEG exp1 -> parseExp exp1 num
+    CONST exp -> ([parseAItem "V" exp], num)
+    COND bexp1 exp1 exp2 -> list where
+            (flist, num1) = parseBexp bexp1 num
+            (slist, num2) = parseExp exp1 num1
+            (tlist, num3) = parseExp exp2 num2
+            list = (flist ++ slist ++ tlist, num3)
+    APP exp exps -> foldr(\exps (acc,y) -> parseExp exps y) ([],num) exps
+    LET funcs exp2 -> list where
+        (flist, num1) = foldr(\func (acc,y) -> parseFun func y) ([],num) funcs
+        (slist, num2) = foldr(\func (acc,y) ->  parseFun func y)  ([],num1) funcs
+        (tlist, num3) = parseExp exp2 num2
+        list = (flist ++ slist ++ tlist, num3)
+         
+
+
+parseBexp:: (Printer b) => (BExp a b) -> Int -> AList 
+parseBexp exp num = case exp of
+    Lt exp1 exp2 -> list where
+        (flist, num1) = parseExp exp1 num
+        (slist, num2) = parseExp exp2 num1
+        list = (flist ++ slist,num2)
+    Gt exp1 exp2 -> list where
+        (flist, num1) = parseExp exp1 num
+        (slist, num2) = parseExp exp2 num1
+        list = (flist ++ slist,num2)
+    Eq exp1 exp2 -> list where
+        (flist, num1) = parseExp exp1 num
+        (slist, num2) = parseExp exp2 num1
+        list = (flist ++ slist,num2)
+    AND bexp1 bexp2 -> list where
+        (flist, num1) = parseBexp bexp1 num
+        (slist, num2) = parseBexp bexp2 num1
+        list = (flist ++ slist, num2)
+    OR  bexp1 bexp2 -> list where
+        (flist, num1) = parseBexp bexp1 num
+        (slist, num2) = parseBexp bexp2 num1
+        list = (flist ++ slist, num2)
+    NOT bexp1 -> parseBexp bexp1 num
+    
+    _ -> ([], num)
     
 
 
-fun1 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))])
-          
+fun1 = (Prog [Fun ("main",["x","y"],(SUB (VAR "x") (VAR "y")))])
+       
+test3 = (Prog [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
+             ,Fun ("f",["x"], (LET 
+                   [Fun ("g",["y"],MUL (VAR "y") (VAR "x"))
+                   ,Fun ("h",["x","y"], DIV (VAR "x") (VAR "y"))]
+                     (ADD (APP "g" [VAR "x"])
+                     (APP "h" [VAR "x",CONST 7])) ))])
