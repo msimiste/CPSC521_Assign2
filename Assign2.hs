@@ -11,8 +11,7 @@ type AList = ([AItem],Int)
     
 varList:: (Printer b) => (Prog a b) -> Int -> AList
 varList (Prog a) num = ourList where 
-        (ourList1, num1) = (foldr(\(Fun (name, args, exps)) (acc,x) -> parseFuncArgs args x (acc,x)))([], num) funcs
-        ourList = foldr(\func (acc,y) ->  parseFun func y (acc,y))  (ourList1,num1) funcs 
+        ourList = foldr(\func (acc,y) ->  parseFun func y (acc,y))  ([],num) funcs 
         funcs = funList (Prog a)
 
 funList:: (Prog a b) -> [Fun a b]
@@ -96,10 +95,7 @@ parseBexp exp num (aItems, aNum) = case exp of
 
 
 fun1 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))])
-
---fun2 = (Prog [(Fun ("main",["x","y","z"], LET [Fun ("f", ["y"], ADD (VAR "x") (APP "g" (VAR "y")))])
- --       , [])])
-         
+      
 test3 = (Prog [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
              ,Fun ("f",["z"], (LET 
                    [Fun ("g",["a"],MUL (VAR "b") (VAR "c"))
