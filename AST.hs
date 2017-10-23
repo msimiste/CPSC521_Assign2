@@ -137,3 +137,10 @@ test2 = putStr (show_prog ((Prog
                     ,Fun ("h",[1,2], DIV (VAR 1) (VAR 2))]
                       (ADD (APP "g" [VAR 1])
                       (APP "h" [VAR 1,CONST 7])) ))]) ::(Prog String Int)))
+
+test4 = (Prog [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
+             ,Fun ("f",["z"], (LET 
+                   [Fun ("g",["a"],MUL (VAR "b") (VAR "c"))
+                   ,Fun ("h",["d","e"], DIV (VAR "h") (VAR "j"))]
+                     (ADD (APP "g" [VAR "k"])
+                     (APP "h" [VAR "l",CONST 7])) ))])
