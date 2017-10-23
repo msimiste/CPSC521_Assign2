@@ -8,6 +8,8 @@ type AItem = (String, Int)
 
 --data AList a = Alist ([AItem],Int) deriving Show
 type AList = ([AItem],Int)
+
+type ST = ([AItem],[AItem], Int, Int)
     
 varList:: (Printer b) => (Prog a b) -> Int -> AList
 varList (Prog a) num = ourList where 
