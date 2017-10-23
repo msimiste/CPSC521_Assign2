@@ -26,14 +26,18 @@ parseFun (Fun a) num aList = case (Fun a) of
                 
 parseFuncArgs::(Printer b) =>  [b] -> Int -> AList -> AList
 parseFuncArgs [] num list = list
-parseFuncArgs args num (aItems, aNum) = foldl(\(acc,n) arg  -> ((parseAItem arg n):acc,n+1)) (aItems, aNum) args
+parseFuncArgs args num (aItems, aNum) = foldl(\(acc,n) arg  -> case ((printer arg) `elem` (listOfVars (aItems,aNum))) of 
+    True -> (acc, n)
+    False -> ((parseAItem arg n):acc,n+1)) (aItems, aNum) args
 
 parseAItem:: (Printer b) =>  b -> Int -> AItem
 parseAItem s num = (printer s, num)
 
 parseExp:: (Printer b) => (Exp a b) -> Int -> AList -> AList
 parseExp exp num (aItems,aNum) = case exp of
-    VAR exp -> ([parseAItem exp num] ++ aItems,num+1)
+    VAR exp -> case ((printer exp) `elem` (listOfVars (aItems,aNum))) of 
+            True -> (aItems, aNum)
+            False -> ([parseAItem exp num] ++ aItems,num+1)
     ADD exp1 exp2 -> list where
             (flist, num1) = parseExp exp1 num (aItems, aNum)
             list = parseExp exp2 num1  (flist, num1)
@@ -78,6 +82,11 @@ parseBexp exp num (aItems, aNum) = case exp of
     NOT bexp1 -> parseBexp bexp1 num (aItems, aNum)    
     _ -> ([], num)
     
+
+
+listOfVars:: AList -> [String]
+listOfVars (aList, num) = foldr(\(x,y) acc -> x:acc) [] aList
+
 fun1 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))])
       
 test3 = (Prog [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
@@ -86,5 +95,12 @@ test3 = (Prog [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
                    ,Fun ("h",["d","e"], DIV (VAR "h") (VAR "j"))]
                      (ADD (APP "g" [VAR "k"])
                      (APP "h" [VAR "l",CONST 7])) ))])
+test5 = (Prog 
+             [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
+             ,Fun ("f",["x"], (LET 
+                   [Fun ("g",["y"],MUL (VAR "y") (VAR "x"))
+                   ,Fun ("h",["x","y"], DIV (VAR "x") (VAR "y"))]
+                     (ADD (APP "g" [VAR "x"])
+                     (APP "h" [VAR "x",CONST 7])) ))])
 
     
