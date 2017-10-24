@@ -24,8 +24,8 @@ funList (Prog funcs) = funcs
 parseFun:: (Printer a, Printer b) => (Fun a b) -> (ST,[Fun a b]) -> (ST,[Fun a b])
 parseFun (Fun a) (symTable, funList)  = case (Fun a) of
     Fun (name, args, exp) -> (table, funs) where
-        (symTable1,funs1) = rename (Fun a)
-        (symTable2,funs1) =  parseFuncArgs args (symTable1,funList)
+        (symTable1,funs1) = rename (Fun a) (symTable, funList)
+        (symTable2,funs2) =  parseFuncArgs args (symTable1,funs1)
         (table,funs) = parseExp exp (symTable2, funs1)
   
 -- check if (current arg , "any num") is an element of vlist (((printer arg),_) `elem` (vars)) 
@@ -37,11 +37,8 @@ parseAItem:: (Printer b) =>  b -> ST -> AItem
 parseAItem s (_, _, vnum,_) = (printer s, vnum)
 
 parseExp:: (Printer a, Printer b) => (Exp a b) -> (ST,[Fun a b]) -> (ST, [Fun a b])
-parseExp exp ((vlist, flist, vnum, fnum), funList) = case exp of
-    VAR exp -> case ((printer exp) `elem` (listOfVars vlist)) of 
-            True -> ((vlist, flist, vnum, fnum),funList)
-            False -> renameVar z9((parseAItem exp sTable):vlist,flist,(vnum+1),fnum),funList) where
-                sTable = (vlist, flist, vnum, fnum) 
+parseExp exp (symTable, funList) = case exp of
+    VAR exp -> rename (Var exp) (symTable, funList)     
     ADD exp1 exp2 -> list where
             (symTable1,funs1) = parseExp exp1 (vlist, flist, vnum, fnum)
             list = parseExp exp2 (symTable1,funs1)
@@ -125,7 +122,7 @@ rename x ((vList, fList, vNum, fNum),funList)  = case x of
     (Fun (name, args, exp)) -> (table, funs) where
         (symTable1,funs1) = case (printer name `elem` (map fst fList)) of 
             True -> ((vLIst, fList, vNum, fNum), func:funList) where
-                index = elemIndex (printer name) (map fst vList)
+                index = elemIndex (printer name) (map fst fList)
                 (str, num) = fList !! index
                 func = (Fun ("f" ++ (show num),args exp))
             False -> (sTable, funs) where
@@ -133,10 +130,22 @@ rename x ((vList, fList, vNum, fNum),funList)  = case x of
                 nameString = printer name  
                 func = "f" ++ (show fNum)
         
-    (Exp a b) -> 
+    (Var exp) -> (case ((printer exp) `elem` (listOfVars vlist)) of 
+            True -> ((vlist, flist, vnum, fnum),func:funList) where
+                index = elemIndex (printer exp) (map fst vList)
+                (str,num) = vlist !! index
+                func = 
+            False -> renameVar z9((parseAItem exp sTable):vlist,flist,(vnum+1),fnum),funList) where
+                sTable = (vlist, flist, vnum, fnum) 
     b -> case ((printer b) `elem` (map fst vList)) of 
-    True -> ((vars,funcs,vnum,fnum),funs)
-    False -> renameArg ((((printer arg),vnum):vars,funcs,(vnum+1),fnum),funs)
+       True -> ((vLIst, fList, vNum, fNum), func:funList) where
+                index = elemIndex (printer name) (map fst vList)
+                (str, num) = vList !! index
+                func = (Fun ("X" ++ (show num),args exp))
+            False -> (sTable, funs) where
+                (sTable, funs) = ((vList, (nameString, fNum):fList, (vNum+1), fNum, func:funList) where -- need a renameFun
+                nameString = printer name  
+                func = "X" ++ (show vNum)
 
 --renameExp:: (Exp a b) -> ST -> (Exp a b)
 
