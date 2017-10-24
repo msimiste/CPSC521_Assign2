@@ -11,91 +11,108 @@ type AList = ([AItem],Int)
 
 type ST = ([AItem],[AItem], Int, Int)
     
-varList:: (Printer b) => (Prog a b) -> Int -> AList
-varList (Prog a) num = ourList where 
-        ourList = foldl(\(acc,y) func ->  parseFun func y (acc,y))  ([],num) funcs 
+varList:: (Printer a, Printer b) => (Prog a b) -> ST
+varList (Prog a) = ourList where 
+        ourList = foldl(\sTable func ->  parseFun func sTable)  ([],[],0,0) funcs 
         funcs = funList (Prog a)
 
 funList:: (Prog a b) -> [Fun a b]
 funList (Prog funcs) = funcs
 
 
-parseFun::(Printer b) => (Fun a b) -> Int -> AList -> AList
-parseFun (Fun a) num aList = case (Fun a) of
-    Fun (name, args, exp) -> list where
-        (flist, num1) =  parseFuncArgs args num aList
-        list = parseExp exp num1 (flist, num1) 
-                
-parseFuncArgs::(Printer b) =>  [b] -> Int -> AList -> AList
-parseFuncArgs [] num list = list
-parseFuncArgs args num (aItems, aNum) = foldl(\(acc,n) arg  -> case ((printer arg) `elem` (listOfVars (aItems,aNum))) of 
-    True -> (acc, n)
-    False -> ((parseAItem arg n):acc,n+1)) (aItems, aNum) args
+parseFun:: (Printer a, Printer b) => (Fun a b) -> ST -> ST 
+parseFun (Fun a) (vList, fList, vNum, fNum)  = case (Fun a) of
+    Fun (name, args, exp) -> table where
+        symTable1 = case (printer name `elem` (map fst vList)) of 
+            True -> (vList, fList, vNum, fNum) 
+            False -> (vList, (nameString, fNum):fList, vNum, (fNum + 1)) where
+                nameString = printer name           
+        symTable2 =  parseFuncArgs args symTable1
+        table = parseExp exp symTable2
+  
+-- check if (current arg , "any num") is an element of vlist (((printer arg),_) `elem` (vars)) 
+parseFuncArgs::(Printer b) =>  [b] -> ST -> ST
+parseFuncArgs [] symTable = symTable
+parseFuncArgs args symTable = foldl(\(vars,funcs,vnum,fnum) arg  -> case ((printer arg) `elem` (map fst vars)) of 
+    True -> (vars,funcs,vnum,fnum)
+    False -> ((parseAItem arg (vars,funcs,vnum,fnum)):vars,funcs,(vnum+1),fnum)) symTable args
 
-parseAItem:: (Printer b) =>  b -> Int -> AItem
-parseAItem s num = (printer s, num)
+parseAItem:: (Printer b) =>  b -> ST -> AItem
+parseAItem s (_, _, vnum,_) = (printer s, vnum)
 
-parseExp:: (Printer b) => (Exp a b) -> Int -> AList -> AList
-parseExp exp num (aItems,aNum) = case exp of
-    VAR exp -> case ((printer exp) `elem` (listOfVars (aItems,aNum))) of 
-            True -> (aItems, aNum)
-            False -> ([parseAItem exp num] ++ aItems,num+1)
+parseExp:: (Printer a, Printer b) => (Exp a b) -> ST -> ST
+parseExp exp (vlist, flist, vnum, fnum) = case exp of
+    VAR exp -> case ((printer exp) `elem` (listOfVars flist)) of 
+            True -> (vlist, flist, vnum, fnum)
+            False -> ((parseAItem exp sTable):vlist,flist,(vnum+1),fnum) where
+                sTable = (vlist, flist, vnum, fnum) 
     ADD exp1 exp2 -> list where
-            (flist, num1) = parseExp exp1 num (aItems, aNum)
-            list = parseExp exp2 num1  (flist, num1)
+            symTable1 = parseExp exp1 (vlist, flist, vnum, fnum)
+            list = parseExp exp2 symTable1
     SUB exp1 exp2 -> list where    
-            (flist, num1) = parseExp exp1 num (aItems, aNum)
-            list = parseExp exp2 num1  (flist, num1)
+            symTable1 = parseExp exp1 (vlist, flist, vnum, fnum)
+            list = parseExp exp2 symTable1
     MUL exp1 exp2 -> list where    
-            (flist, num1) = parseExp exp1 num (aItems, aNum)
-            list = parseExp exp2 num1  (flist, num1)
+            symTable1 = parseExp exp1 (vlist, flist, vnum, fnum)
+            list = parseExp exp2 symTable1
     DIV exp1 exp2 -> list where    
-            (flist, num1) = parseExp exp1 num (aItems, aNum)
-            list = parseExp exp2 num1 (flist, num1)
-    NEG exp1 -> parseExp exp1 num (aItems, aNum)
-    CONST exp -> ([parseAItem "V" exp] ++ aItems, aNum)
+            symTable1 = parseExp exp1 (vlist, flist, vnum, fnum)
+            list = parseExp exp2 symTable1
+    NEG exp1 -> parseExp exp1 (vlist, flist, vnum, fnum)
+    CONST exp -> (("",exp):vlist, flist, vnum, fnum) where
+        sTable = (vlist, flist, vnum, fnum)
     COND bexp1 exp1 exp2 -> list where
-            (flist, num1) = parseBexp bexp1 num (aItems, aNum)
-            (slist, num2) = parseExp exp1 num1 (flist, num1)
-            list = parseExp exp2 num2 (slist, num2)
-    APP exp exps -> foldl(\(acc,y) exps  -> parseExp exps y (acc,y)) (aItems,aNum) exps
+            symTable1 = parseBexp bexp1 (vlist, flist, vnum, fnum)
+            symTable2 = parseExp exp1 symTable1
+            list = parseExp exp2 symTable2
+    APP exp exps -> list where
+        symTable = case (printer exp `elem` (map fst flist)) of 
+            True -> (vlist,flist,vnum,fnum)
+            False -> (vlist,(printer exp,fnum):flist,vnum,(fnum+1)) 
+        list = foldl(\sTable exps -> parseExp exps sTable) symTable exps --fix app of fcn name
     LET funcs exp2 -> list where
-        (flist, num1) =  foldl(\(acc,y) func  -> parseFun func y (acc,y)) (aItems,aNum) funcs  
-        list = parseExp exp2 num1 (flist, num1)
-       
-
-parseBexp:: (Printer b) => (BExp a b) -> Int -> AList -> AList
-parseBexp exp num (aItems, aNum) = case exp of
+        symTable1 =  foldl(\sTable func -> parseFun func sTable) (vlist, flist, vnum, fnum) funcs  
+        list = parseExp exp2 symTable1
+ 
+ 
+--parseExp exp symtable
+-- Var exp -> case () of 
+--      True -> symtable
+--      False -> ((parseAItem exp symtable):vlist, flist, (vnum+1), fnum) where
+--      (vlist,flist,vnum,fnum) = symtable
+--       
+parseBexp:: (Printer a, Printer b) => (BExp a b) -> ST -> ST
+parseBexp exp symTable = case exp of
     Lt exp1 exp2 -> list where
-        (flist, num1) = parseExp exp2 num (aItems, aNum)
-        list = parseExp exp1  num1 (flist, num1)     
+        symTable1 = parseExp exp2 symTable
+        list = parseExp exp1 symTable1     
     Gt exp1 exp2 -> list where
-        (flist, num1) = parseExp exp2 num (aItems, aNum)
-        list = parseExp exp1  num1 (flist, num1)       
+        symTable1 = parseExp exp2 symTable
+        list = parseExp exp1 symTable1        
     Eq exp1 exp2 -> list where
-        (flist, num1) = parseExp exp2 num (aItems, aNum)
-        list = parseExp exp1 num1 (flist, num1)        
+        symTable1 = parseExp exp2 symTable
+        list = parseExp exp1 symTable1         
     AND bexp1 bexp2 -> list where
-        (flist, num1) = parseBexp bexp2 num (aItems, aNum)
-        list = parseBexp bexp1 num1 (flist, num1)      
+        symTable1 = parseBexp bexp2 symTable
+        list = parseBexp bexp1 symTable1      
     OR  bexp1 bexp2 -> list where
-        (flist, num1) = parseBexp bexp2 num (aItems, aNum)
-        list = parseBexp bexp1 num1 (flist, num1)       
-    NOT bexp1 -> parseBexp bexp1 num (aItems, aNum)    
-    _ -> ([], num)
+        symTable1 = parseBexp bexp2 symTable
+        list = parseBexp bexp1 symTable1        
+    NOT bexp1 -> parseBexp bexp1 symTable   
+    _ -> symTable
     
 
 
-listOfVars:: AList -> [String]
-listOfVars (aList, num) = foldr(\(x,y) acc -> x:acc) [] aList
+listOfVars::  [AItem] -> [String]
+listOfVars aList = foldr(\(x,y) acc -> x:acc) [] aList
 
 fun1 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))])
       
 test3 = (Prog [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
              ,Fun ("f",["z"], (LET 
                    [Fun ("g",["a"],MUL (VAR "b") (VAR "c"))
-                   ,Fun ("h",["d","e"], DIV (VAR "h") (VAR "j"))]
-                     (ADD (APP "g" [VAR "k"])
+                   ,Fun ("h",["d","e"], DIV (VAR "m") (VAR "j"))]
+                     (ADD (APP "t" [VAR "k"])
                      (APP "h" [VAR "l",CONST 7])) ))])
 test5 = (Prog 
              [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
