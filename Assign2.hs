@@ -13,7 +13,7 @@ type ST = ([AItem],[AItem], Int, Int)
     
 varList:: (Printer a, Printer b) => (Prog a b) -> ST
 varList (Prog a) = ourList where 
-        ourList = foldl(\sTable func ->  parseFun func sTable)  ([],[],0,0) funcs 
+        ourList = foldl(\sTable func ->  parseFun func sTable)  ([],[],0,0) funcs []
         funcs = funList (Prog a)
 
 funList:: (Prog a b) -> [Fun a b]
@@ -42,7 +42,7 @@ parseAItem s (_, _, vnum,_) = (printer s, vnum)
 
 parseExp:: (Printer a, Printer b) => (Exp a b) -> ST -> ST
 parseExp exp (vlist, flist, vnum, fnum) = case exp of
-    VAR exp -> case ((printer exp) `elem` (listOfVars flist)) of 
+    VAR exp -> case ((printer exp) `elem` (listOfVars vlist)) of 
             True -> (vlist, flist, vnum, fnum)
             False -> ((parseAItem exp sTable):vlist,flist,(vnum+1),fnum) where
                 sTable = (vlist, flist, vnum, fnum) 
@@ -84,20 +84,20 @@ parseExp exp (vlist, flist, vnum, fnum) = case exp of
 parseBexp:: (Printer a, Printer b) => (BExp a b) -> ST -> ST
 parseBexp exp symTable = case exp of
     Lt exp1 exp2 -> list where
-        symTable1 = parseExp exp2 symTable
-        list = parseExp exp1 symTable1     
+        symTable1 = parseExp exp1 symTable
+        list = parseExp exp2 symTable1     
     Gt exp1 exp2 -> list where
-        symTable1 = parseExp exp2 symTable
-        list = parseExp exp1 symTable1        
+        symTable1 = parseExp exp1 symTable
+        list = parseExp exp2 symTable1        
     Eq exp1 exp2 -> list where
-        symTable1 = parseExp exp2 symTable
+        symTable1 = parseExp exp1 symTable
         list = parseExp exp1 symTable1         
     AND bexp1 bexp2 -> list where
-        symTable1 = parseBexp bexp2 symTable
-        list = parseBexp bexp1 symTable1      
+        symTable1 = parseBexp bexp1 symTable
+        list = parseBexp bexp2 symTable1      
     OR  bexp1 bexp2 -> list where
-        symTable1 = parseBexp bexp2 symTable
-        list = parseBexp bexp1 symTable1        
+        symTable1 = parseBexp bexp1 symTable
+        list = parseBexp bexp2 symTable1        
     NOT bexp1 -> parseBexp bexp1 symTable   
     _ -> symTable
     
@@ -122,4 +122,13 @@ test5 = (Prog
                      (ADD (APP "g" [VAR "x"])
                      (APP "h" [VAR "x",CONST 7])) ))])
 
-    
+
+
+--rename:: [Fun a b] -> ST -> [Fun a b]
+
+--renameExp:: (Exp a b) -> ST -> (Exp a b)
+
+--renameFun:: (Fun a b) -> ST -> (Fun a b)
+-
+
+--[(name,[fcns],[Vargs],[Vfrees])]
