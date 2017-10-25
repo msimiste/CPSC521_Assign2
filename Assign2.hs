@@ -29,9 +29,9 @@ funList (Prog funcs) = funcs
 parseFun::  (Fun String String) -> (ST,[Fun String String]) -> (ST,[Fun String String])
 parseFun func (symTable, funList)  = case func of
     Fun (name, args, exp) -> (table, funs) where
-        (symTable1,funs1) = rename (symTable, funList) --rename1 func (symTable, funList)
+        (symTable1,funs1) = foldl(\(st,funs) func -> (st, ((snd(replaceFuncName (st, func))):funs))) (symTable, []) funList--rename1 func (symTable, funList)
         --(symTable2,funs2) =  parseFuncArgs func (symTable1,funs1)
-        (table,funs) = parseExp exp (symTable1, funs1)
+        (table,funs) =  (symTable1, funs1)--parseExp exp (symTable1, funs1)
   
 -- check if (current arg , "any num") is an element of vlist (((printer arg),_) `elem` (vars)) 
 parseFuncArgs::  (Fun String String) -> (ST, [Fun String String]) -> (ST, [Fun String String])
@@ -127,16 +127,18 @@ test5 = (Prog
 
 testTable = ([("y",1),("x",0)],[("main",9)],2,1)::ST
 
-rename:: (ST, [Fun String String]) -> (ST, [Fun String String])
+--rename:: (ST, [Fun String String]) -> (ST, [Fun String String])
 --rename (table, funclist) = map (\(Fun (name,args,exp)) -> (Fun ((replaceName name), (replaceArgs args), (replaceExps exp))) ) funcList
-rename (table, funclist) = -- continue from here
+--rename (table, funclist) = fold(\(st,funs) fun -> )(table,funclist) funclist
 
-replaceFuncName:: ST -> (Fun String String) -> (Fun String String)
-replaceFuncName (vList,fList,vNum,fNum) (Fun (name, args,exp)) = case (checkInList name fList) of 
-    True-> ((vList, fList, vNum, fNum),retFunction) where
+replaceFuncName:: (ST,(Fun String String)) -> (ST,(Fun String String))
+replaceFuncName ((vList,fList,vNum,fNum),(Fun (name, args,exp))) = case (checkInList name fList) of 
+    True -> ((vList, fList, vNum, fNum),retFunction) where
         index = getIndex name fList
         (str, num) = fList !! index
-        retFunction = (Fun ("X" ++ show num,args,exp)) 
+        retFunction = (Fun ("f" ++ show num,args,exp)) 
+    False -> ((vList,(name,fNum):fList, vNum, (fNum+1)),retFunction) where
+        retFunction = (Fun ("f" ++ show fNum,args,exp))
 
 replaceExpName:: ST -> (Exp String String) -> (ST, (Exp String String))
 replaceExpName (vList, fList, vNum, fNum) exp = case exp of
