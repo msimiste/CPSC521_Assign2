@@ -17,7 +17,9 @@ data Prog a b = Prog [Fun a b] deriving Show
 --  finally there is the body of the function.
 -----------------------------------------------------------------------------
 
-data Fun a b = Fun (a,[b],Exp a b) deriving Show
+--data Fun1 a b = Fun1 (a,[b],Exp a b) deriving Show
+
+data Fun a b = Fun1 (a,[b],Exp a b) | Fun (String, [b], Exp a b) deriving Show
 
 -----------------------------------------------------------------------------
 -- There are two types of expressions: Boolean expressions and 
@@ -61,15 +63,17 @@ data Exp a b =  ADD (Exp a b) (Exp a b)
 -- (idea from stack overflow!) add instances as needed.  Can pretty print programs 
 -- with Stings and Int
 -----------------------------------------------------------------------------
-class RevPrinter a where
-    revPrinter:: String -> a 
 
+    
 class Printer a where 
    printer:: a -> String
-
+   
 instance Printer a => Printer [a] where 
    printer [] = []
    printer (a:as) = (printer a)++(printer as)
+
+instance Printer Integer where
+   printer n = "v"++show (n::Integer)
 
 instance Printer Int where
    printer n = "v"++show (n::Int)
