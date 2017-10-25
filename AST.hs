@@ -49,7 +49,7 @@ data Exp a b =  ADD (Exp a b) (Exp a b)
           | DIV (Exp a b) (Exp a b)
           | NEG (Exp a b)
           | CONST Int
-          | VAR String         
+          | VAR b        
           | COND (BExp a b) (Exp a b)(Exp a b)
           | APP String [(Exp a b)]
           | LET [Fun a b] (Exp a b)

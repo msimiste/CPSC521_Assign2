@@ -17,7 +17,7 @@ type AList = ([AItem],Int)
 
 type ST = ([AItem],[AItem], Int, Int)
     
-varList::  (Prog String String) -> [Fun String String]
+varList::  (Prog String String) -> [Fun String String]--ST
 varList (Prog prog) = functions where 
         (ourList,functions) = foldl(\(sTable,funcs1) func ->  parseFun func (sTable,funcs1) )  (([],[],0,0),funcs) funcs 
         funcs = funList (Prog prog)
@@ -29,7 +29,7 @@ funList (Prog funcs) = funcs
 parseFun::  (Fun String String) -> (ST,[Fun String String]) -> (ST,[Fun String String])
 parseFun func (symTable, funList)  = case func of
     Fun (name, args, exp) -> (table, funs) where
-        (symTable1,funs1) = rename1 func (symTable, funList)
+        (symTable1,funs1) = rename (symTable, funList) --rename1 func (symTable, funList)
         --(symTable2,funs2) =  parseFuncArgs func (symTable1,funs1)
         (table,funs) = parseExp exp (symTable1, funs1)
   
@@ -42,7 +42,7 @@ parseFuncArgs func (symTable,funList) = rename_args func (symTable, funList)
 parseAItem::  String -> ST -> AItem
 parseAItem s (_, _, vnum,_) = (printer s, vnum)
 
-parseExp::  (Exp String String) -> (ST,[Fun String String]) -> (ST, [Fun String String])
+parseExp::  (Exp String String) -> (ST,[Fun String String]) -> (ST, [Fun String String]) 
 parseExp exp (symTable, funList) = case exp of
     VAR exp -> rename_var (VAR exp) (symTable, funList)     
     ADD exp1 exp2 -> (tbl,list) where
@@ -78,12 +78,7 @@ parseExp exp (symTable, funList) = case exp of
         (tbl,funs2) = parseExp exp2 (symTable1,funs1)
         list = funs2
  
---parseExp exp symtable
--- Var exp -> case () of 
---      True -> symtable
---      False -> ((parseAItem exp symtable):vlist, flist, (vnum+1), fnum) where
---      (vlist,flist,vnum,fnum) = symtable
---       
+      
 parseBexp::  (BExp String String) -> (ST,[Fun String String]) -> (ST, [Fun String String])
 parseBexp exp (symTable, funList) = case exp of
     Lt exp1 exp2 -> (tbl,list) where
@@ -134,13 +129,12 @@ testTable = ([("y",1),("x",0)],[("main",9)],2,1)::ST
 
 rename:: (ST, [Fun String String]) -> (ST, [Fun String String])
 --rename (table, funclist) = map (\(Fun (name,args,exp)) -> (Fun ((replaceName name), (replaceArgs args), (replaceExps exp))) ) funcList
-rename (table, funclist) = (table, map (\func -> replaceFuncName table func) funclist) 
-
+rename (table, funclist) = -- continue from here
 
 replaceFuncName:: ST -> (Fun String String) -> (Fun String String)
-replaceFuncName (_,fList,_,fNum) (Fun (name, args,exp)) = case ((printer name) `elem` (map fst fList)) of 
-    True-> retFunction where
-        index = fromJust (elemIndex (printer name) (map fst fList))
+replaceFuncName (vList,fList,vNum,fNum) (Fun (name, args,exp)) = case (checkInList name fList) of 
+    True-> ((vList, fList, vNum, fNum),retFunction) where
+        index = getIndex name fList
         (str, num) = fList !! index
         retFunction = (Fun ("X" ++ show num,args,exp)) 
 
@@ -164,11 +158,12 @@ getIndex item list = fromJust (elemIndex item (map fst list))
  
                -- (table, funs) = rename_args  (Fun ((revPrinter name1), args, exp)) ((vList, fList, vNum,fNum),funList)
                -- name1 = "f" ++ (show num)
-               -- funList1 = fun
+
+
 
 rename1:: (Fun String String) -> (ST,[Fun String String]) -> (ST,[Fun String String])
 rename1 function ((vList, fList, vNum, fNum),funList)  = case function of 
-    (Fun (name, args, exp)) -> case ((printer name) `elem` (map fst fList)) of 
+    (Fun (name, args, exp)) -> case (checkInList name fList) of 
             True -> ((vList, fList, vNum, fNum), funList1) where
                 index = fromJust (elemIndex (printer name) (map fst fList))
                 (str, num) = fList !! index
@@ -184,16 +179,16 @@ rename1 function ((vList, fList, vNum, fNum),funList)  = case function of
                               
 rename_var:: (Exp String String) -> (ST, [Fun String String]) -> (ST, [Fun String String])
 rename_var eXp ((vList, fList, vNum, fNum),funList) =  case eXp of
-    (VAR exp) -> case ((printer exp) `elem` (listOfVars vList)) of 
+    (VAR exp) -> case (checkInList exp vList) of 
         True -> ((vList, fList, vNum, fNum), funList1) where
-            index = fromJust (elemIndex (printer exp) (map fst vList))
+            index = getIndex exp vList
             (str,num) = vList !! index
             funList1 = funList
-            exp = ("X" ++ show vNum)
+            --exp = ("X" ++ show vNum)
         False -> (sTable, funList1) where
             sTable = (((printer exp),vNum):vList,fList,(vNum+1),fNum)
             funList1 = funList
-            exp = ("X" ++ show vNum)
+            --exp = ("X" ++ show vNum)
 
 --replaceVar:: (Exp String String) -> (Exp String String) -> [Fun String String] -> [Fun String String]
 
@@ -205,19 +200,20 @@ rename_args (Fun (name, args, exp)) (symTable, funList)  = (table, functions) wh
 
 
 rename_arg:: String -> ST -> (ST, String)
-rename_arg arg  (vList, fList, vNum, fNum) = case ((printer arg) `elem` (map fst vList)) of 
-    True -> (table, argVal) where
-            index = fromJust (elemIndex (printer arg) (map fst vList))
+rename_arg arg  (vList, fList, vNum, fNum) = case (checkInList arg vList) of 
+    True -> (table, str) where
+            index = getIndex arg vList
             (str, num) = vList !! index
-            argVal = "X" ++ show vNum
+            --argVal = "X" ++ show vNum
             table = (vList, fList, vNum, fNum)
     
-    False -> (table, argVal) where
-            table = ((argVal,vNum):vList,fList,(vNum+1),fNum)
-            argVal = "X" ++ show vNum
+    False -> (table, arg) where
+            table = ((arg,vNum):vList,fList,(vNum+1),fNum)
+            --argVal = "X" ++ show vNum
                 
 rename_funName:: String-> (ST, [Fun String String]) -> (ST, [Fun String String])
 rename_funName name ((vList, fList, vNum, fNum),funList) =  case ((printer name) `elem` (map fst fList)) of 
     True -> ((vList,fList,vNum,fNum), funList)
     False -> ((vList,(printer name,fNum):fList,vNum,(fNum+1)),funList)
+
 
