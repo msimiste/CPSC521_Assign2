@@ -61,7 +61,8 @@ data Exp a b =  ADD (Exp a b) (Exp a b)
 -- (idea from stack overflow!) add instances as needed.  Can pretty print programs 
 -- with Stings and Int
 -----------------------------------------------------------------------------
-
+class RevPrinter a where
+    revPrinter:: String -> a 
 
 class Printer a where 
    printer:: a -> String
