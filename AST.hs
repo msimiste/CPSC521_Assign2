@@ -19,7 +19,7 @@ data Prog a b = Prog [Fun a b] deriving Show
 
 --data Fun1 a b = Fun1 (a,[b],Exp a b) deriving Show
 
-data Fun a b = Fun1 (a,[b],Exp a b) | Fun (String, [b], Exp a b) deriving Show
+data Fun a b = Fun (a,[b],Exp a b)  deriving Show
 
 -----------------------------------------------------------------------------
 -- There are two types of expressions: Boolean expressions and 
@@ -49,9 +49,9 @@ data Exp a b =  ADD (Exp a b) (Exp a b)
           | DIV (Exp a b) (Exp a b)
           | NEG (Exp a b)
           | CONST Int
-          | VAR b         
+          | VAR String         
           | COND (BExp a b) (Exp a b)(Exp a b)
-          | APP a [(Exp a b)]
+          | APP String [(Exp a b)]
           | LET [Fun a b] (Exp a b)
           deriving Show   
 
@@ -135,13 +135,13 @@ test1 = putStr (show_prog ((Prog
                      (ADD (APP "g" [VAR "x"])
                      (APP "h" [VAR "x",CONST 7])) ))]) ::(Prog String String)))
 
-test2 = putStr (show_prog ((Prog 
-              [Fun ("main",[],(ADD (VAR 1) (VAR 2)))
-              ,Fun ("f",[1], (LET 
-                    [Fun ("g",[2],MUL (VAR 2) (VAR 1))
-                    ,Fun ("h",[1,2], DIV (VAR 1) (VAR 2))]
-                      (ADD (APP "g" [VAR 1])
-                      (APP "h" [VAR 1,CONST 7])) ))]) ::(Prog String Int)))
+--test2 = putStr (show_prog ((Prog 
+--              [Fun ("main",[],(ADD (VAR 1) (VAR 2)))
+--              ,Fun ("f",[1], (LET 
+--                    [Fun ("g",[2],MUL (VAR 2) (VAR 1))
+--                    ,Fun ("h",[1,2], DIV (VAR 1) (VAR 2))]
+--                      (ADD (APP "g" [VAR 1])
+--                      (APP "h" [VAR 1,CONST 7])) ))]) ::(Prog String Int)))
 
 test4 = (Prog [Fun ("main",[],(ADD (VAR "x") (VAR "y")))
              ,Fun ("f",["z"], (LET 
