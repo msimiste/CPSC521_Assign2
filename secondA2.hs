@@ -14,19 +14,37 @@ type AList = ([AItem],Int)
 
 type ST = ([AItem],[AItem], Int, Int)
 
+
+newtype State s a = State { runState :: s -> (ST, Fun String String) }
+
+instance Monad State ST Fun String String where
+
+st >>= f = State (\s -> let (s1,x) = app st s in app (f x) st1)
+
+
+
 varList::  (Prog String String) -> [Fun String String]--[Fun String String]--ST
-varList (Prog prog) =  goFun ((([],[],0,0),funcs) where
+varList (Prog prog) =  functions where
+        (table,functions) = goFun (([],[],0,0),funcs)
     --(ourList,functions) <- foldl(\(sTable,funcs1) func ->  parseFun func (sTable,funcs1) )  (([],[],0,0),funcs) funcs 
         --(table,functions) = foldl(\(stbl,funs) func -> (starter (stbl, func))) (([],[],0,0),[]) funcs
         --(table,functions) = myMap starter (tbl, funcs) where
           --  tbl = ([],[],0,0)::ST
         funcs = funList (Prog prog)
 
+funList:: (Prog String String) -> [Fun String String]
+funList (Prog funcs) = funcs
 
-goFun:: (ST,[Fun String String]) -> (ST, [Fun String String])
-goFun (table,(f:funcs)) = do
-            (tbl, func) <- starter (table
-        
+goFun:: (ST, [Fun String String]) -> (ST,[Fun String String])
+--goFun:: (ST,[Fun String String]) -> (ST, [Fun String String])
+goFun (table, funcs) = starter (table, funcs) (>>=) 
+    --do 
+    --        (tbl, func) <- starter (table, f)
+    --        (tbl1, func1) <- goFun (tbl, funcs)
+    --        --case (length funcs > 0) of 
+    --          --  True -> do
+    --                --(tbl1, funcs1) <- goFun (tbl, funcs)
+    --        ;return (tbl1,func1)
 starter:: (ST, Fun String String) -> (ST, Fun String String)
 starter (table, fun) = (st,(Fun (name,args,exp))) where
     (st1, (Fun (name,_,_))) = replaceFuncName (table, fun)
@@ -34,13 +52,11 @@ starter (table, fun) = (st,(Fun (name,args,exp))) where
     (st, (Fun (_,_,exp))) = replaceFuncExp (st2,fun)
     
         
-funList:: (Prog String String) -> [Fun String String]
-funList (Prog funcs) = funcs
 
-myMap::((ST, Fun String String) -> (ST, Fun String String)) -> (ST, [Fun String String]) -> (ST, [Fun String String])
-myMap _ (tble,[]) = (tble,[])
-myMap f (tbl,f:fcns) = (table, funcs) where
-(f tbl f):
+--myMap::((ST, Fun String String) -> (ST, Fun String String)) -> (ST, [Fun String String]) -> (ST, [Fun String String])
+--myMap _ (tble,[]) = (tble,[])
+--myMap f (tbl,f:fcns) = (table, funcs) where
+--(f tbl f):
 --foldl(\(tble,funs) fun -> f (tble,fun))(tbl,[]) (lst)   
 
 replaceFuncName:: (ST,(Fun String String)) -> (ST,(Fun String String))
