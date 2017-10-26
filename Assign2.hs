@@ -42,7 +42,7 @@ parseFuncArgs func (symTable,funList) = rename_args func (symTable, funList)
 parseAItem::  String -> ST -> AItem
 parseAItem s (_, _, vnum,_) = (printer s, vnum)
 
-parseExp::  (Exp String String) -> (ST,[Fun String String]) -> (ST, [Fun String String]) 
+parseExp::  (ST, Exp String String) -> (Exp String String) 
 parseExp exp (symTable, funList) = case exp of
     VAR exp -> (st,funs) where
         (st, ex) = replaceExpName (symTable, (VAR exp)) 
