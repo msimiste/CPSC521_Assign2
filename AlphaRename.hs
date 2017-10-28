@@ -15,7 +15,7 @@ type ST = ([AItem],[AItem], Int, Int)
 
 
 alphaRename::  (Prog String String) -> (Prog String String)
-alphaRename (Prog prog) = (Prog functions) where 
+alphaRename (Prog prog) = Prog functions where 
             (table, functions) = goFun (([],[],1,1),funcs)
             funcs = funList (Prog prog)
 

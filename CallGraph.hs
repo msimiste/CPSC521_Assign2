@@ -1,19 +1,17 @@
+module  CallGraph where
+
 import AlphaRename
 import AST
 
 type CallGraph = [CallItem]
 type CallItem = (String, [String])
-type FreeVars = [String]
-type Arguments = [String]
-type Name = String
-
-type FinalFunction = (Name, Arguments,FreeVars, CallGraph)
 
 
-produceFinal:: (Prog String String) -> CallGraph
-produceFinal (Prog prog) = callG where
-    functions1 = funcList (Prog prog)
-    (callG, functions2) = processListOfFuncs ([], functions1)
+
+produceCallGraph:: (Prog String String) -> ([Fun String String], CallGraph)
+produceCallGraph (Prog prog) = (functions, callG) where
+    functions = funcList (Prog prog)
+    (callG, functions2) = processListOfFuncs ([], functions)
    
 funcList :: (Prog String String) ->[Fun String String]
 funcList (Prog prog) = functions where
@@ -124,7 +122,7 @@ letUpdate:: CallGraph -> [Fun String String] -> CallGraph
 letUpdate ((nm,list):cg) functions = graph where
 
     names = listOfNames functions   
-    graph = ((nm, names ++ list):cg)
+    graph = ((nm, names ++ list):cg) -- remove duplicates from list concat
    
 
 processListOfExpressions:: (CallGraph, [Exp String String]) -> (CallGraph, [Exp String String])
@@ -134,13 +132,7 @@ processListOfExpressions (callG, (e:exps)) = (callGraph,expressions) where
     (cg2, exprs) = processListOfExpressions (cg1,exps)
     (callGraph, expressions) = (cg2,((exp1):exprs))
     
-fun2 = (Prog 
-             [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
-             ,Fun ("f",["x"], (LET 
-                   [Fun ("g",["y"],ADD (VAR "y") (VAR "x"))
-                   ,Fun ("h",["x","y"], ADD (APP "main" [VAR "x"])(VAR "y"))]
-                     (ADD (APP "g" [VAR "x"])
-                     (APP "h" [VAR "x"])) ))])
+
                      
 listOfNames:: [Fun String String] -> [String]
 listOfNames funcs = map (\(Fun (name,_,_)) -> name) funcs

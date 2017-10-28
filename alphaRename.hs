@@ -16,8 +16,8 @@ type AList = ([AItem],Int)
 type ST = ([AItem],[AItem], Int, Int)
 
 
-varList::  (Prog String String) -> (Prog String String)
-varList (Prog prog) = (Prog functions) where 
+varList::  (Prog String String) -> (ST)--(Prog String String)
+varList (Prog prog) = Table --(Prog functions) where 
         (table, functions) = goFun (([],[],1,1),funcs)
         funcs = funList (Prog prog)
 
