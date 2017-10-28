@@ -21,7 +21,7 @@ lambdaLift inTable prog = table where
     table = lambdaFunctions (inTable, alphaFuncs)
 
 lambdaFunctions:: (Table,[Fun String String]) -> (Table)
-lambdaFunctions (([],[]),func) = ([],[])
+lambdaFunctions (tble,[]) = tble
 lambdaFunctions (inTable,(f:funcs)) = table where
     (t1) = lambdaFunction (inTable, f)
     (t2) = lambdaFunctions (t1,funcs)
@@ -30,7 +30,7 @@ lambdaFunctions (inTable,(f:funcs)) = table where
 lambdaFunction:: (Table, Fun String String) -> Table 
 lambdaFunction (inTable, (Fun (name,args,exp))) = outTable where
         table1 = addFuncToTable inTable (funcToFF func)     
-        outTable = lambdaExpression (inTable, func, exp)
+        outTable = lambdaExpression (table1, func, exp)
         func = (Fun (name,args,exp))        
 
 lambdaExpression:: (Table, (Fun String String), (Exp String String)) -> Table
@@ -38,7 +38,7 @@ lambdaExpression (inTable, (Fun (name,args,e)), exp) = case exp of
 
     LET funcs exp1 -> table where
         table1 = lambdaFunctions (inTable, funcs)
-        table = lambdaExpression (table1, (Fun(name,args,e)), exp)  
+        table = lambdaExpression (table1, (Fun(name,args,e)), exp1)  
           
     APP name exp1 -> inTable 
 
@@ -107,7 +107,9 @@ updateTableFreeVar (ffList, cList) (name,var) = table1 where
     
 updateFFList:: [FinalFunction] -> String -> String -> [FinalFunction]
 updateFFList ffList name var = map (\(n,args,vars) -> case (n == name) of 
-    True -> (n,args,(var:vars))
+    True -> case (var `elem` vars) of 
+        True -> (n,args,vars)
+        False -> (n,args,(var:vars))
     False -> (n,args,vars)) ffList
     
 addFuncToTable :: Table -> FinalFunction-> Table
@@ -123,38 +125,7 @@ funcToFF (Fun (name,args,e)) = (name,args,[])
 getTableNames:: Table -> [String]
 getTableNames (ffList, cList) = map (\(name,_,_) -> name) ffList
 
---    table = getFinalFunctionNames callGraph
 
---getFinalFunctionNames:: CallGraph -> Table
---getFinalFunctionNames callGraph = map (\(name,_) -> (name,[],[],[])) callGraph
---
---
---firstPass:: (Table,[Fun String String]) -> (Table, [Fun String String]) 
---firstPass funcs inTable = outTable where
---    processFuncs 
---    
---processFuncs:: (Table, [Fun String String]) -> (Table, [Fun String String])
---processFuncs (table, funcs) = outTable where
---    
---    
---
---processFunction:: (FinalFunction, (Fun String String)) -> (FinalFunction)
---processFucntion table (Fun (name,args,_)) = outTable where
---    table1 = (FinalFunction(name,args,[],[])):table
---    
---    
---
---addArgsToFunction:: FinalFunction -> [String] -> FinalFunction
---addArgsToFunction (FinalFunction(name,_,_._)) args = (FinalFunction(name,args,_,_))   
---    
---getFunction:: Name -> Table -> FinalFunction
---getFunction name [] = error "Empty Table"
---getFunction name table = finalFunction where
---    index = getFunctionIndex name table
---    finalFunction = table !! index 
---
---getFunctionIndex:: Name -> Table -> Int
---getFunctionIndex name table = fromJust (elemIndex name (map (\(n,_,_,_) -> n) table))
 --
 --
 ----start::
@@ -168,10 +139,4 @@ getTableNames (ffList, cList) = map (\(name,_,_) -> name) ffList
 ----5. compare list of final functions to previous list of Final functions
 ----6. if step 5 is such that both lists are equal, stop otherwise goto step 4
 
--- namesAndArgs:: [Fun String String] -> [(String,[String])]
--- namesAndArgs funcs = finalList where
---     names = map (\(Fun (name,_,_)) -> name) funcs
---     arguments = map(\(Fun (_,args,_)) -> args) funcs
---     finalList = zip names arguments
---    
---
+

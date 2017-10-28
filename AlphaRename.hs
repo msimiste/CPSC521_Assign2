@@ -170,7 +170,14 @@ getAItem name list =  (name,alias) where
  
 fun1 = (Prog [Fun ("main",["x","y","a","b"],(COND (Lt (VAR "a") (VAR "b")) (VAR "x") (VAR "y") ))])
 
-
+fun2 = (Prog 
+             [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
+             ,Fun ("f",["x"], (LET 
+                   [Fun ("g",["y"],ADD (VAR "y") (VAR "x"))
+                   ,Fun ("h",["x","y"], ADD (APP "main" [VAR "x"])(VAR "y"))]
+                     (ADD (APP "g" [VAR "x"])
+                     (APP "h" [VAR "x"])) ))])
+                     
       
 test3 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
              ,Fun ("f",["z"], (LET 
