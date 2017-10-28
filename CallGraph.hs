@@ -102,8 +102,8 @@ processBexpression (callG, exp) = case (exp) of
     NOT exp1 -> (callGraph, NOT expression) where
             (callGraph, expression) = processBexpression (callG, exp1)                             
           
-    TRUE          -> (callG, TRUE)    
-    FALSE         -> (callG, FALSE)
+    TRUE  -> (callG, TRUE)    
+    FALSE -> (callG, FALSE)
  
 
 updateCallGraph :: CallGraph -> String -> CallGraph
@@ -122,7 +122,9 @@ letUpdate:: CallGraph -> [Fun String String] -> CallGraph
 letUpdate ((nm,list):cg) functions = graph where
 
     names = listOfNames functions   
-    graph = ((nm, names ++ list):cg) -- remove duplicates from list concat
+    graph = ((nm, list1):cg)
+    list1 = (mergeUnique names list)
+    --graph = ((nm, names ++ list):cg) -- remove duplicates from list concat
    
 
 processListOfExpressions:: (CallGraph, [Exp String String]) -> (CallGraph, [Exp String String])
@@ -132,7 +134,11 @@ processListOfExpressions (callG, (e:exps)) = (callGraph,expressions) where
     (cg2, exprs) = processListOfExpressions (cg1,exps)
     (callGraph, expressions) = (cg2,((exp1):exprs))
     
-
-                     
+mergeUnique:: [String] -> [String] -> [String]
+mergeUnique l [] = l
+mergeUnique [] l = l
+mergeUnique (l:list1) list2 = case (l `elem` list2) of 
+    True -> mergeUnique list1 list2
+    False -> mergeUnique list1 (l:list1)
 listOfNames:: [Fun String String] -> [String]
 listOfNames funcs = map (\(Fun (name,_,_)) -> name) funcs

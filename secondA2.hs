@@ -1,18 +1,14 @@
-
 import ParseProg
 import AST
 import Data.List
 import Data.Maybe
-
-
-
 
 type AItem = (String, Int)
 type AList = ([AItem],Int)
 type ST = ([AItem],[AItem], Int, Int)
 
 
-varList::  (Prog String String) -> (Prog String String)
+varList:: (Prog String String) -> (Prog String String)
 varList (Prog prog) = (Prog functions) where 
         (table, functions) = goFun (([],[],1,1),funcs)
         funcs = funList (Prog prog)
@@ -27,13 +23,17 @@ goFun (table, (f:fs)) = (tbl, fcns) where
     (st2, fss) = goFun (st1,fs)
     (tbl,fcns) = (st2,fcn:fss)
 
-  
-renameFunction:: (ST, (Fun String String)) -> (ST, Fun String String)
-renameFunction  (table, fun) = (st,(Fun (name,args,exp))) where
-    (st1, (Fun (name,_,_))) = replaceFuncName (table, fun)
-    (st2,(Fun (_,args,_))) = replaceFuncArgs (st1, fun)
-    (st, (Fun (_,_,exp))) = replaceFuncExp (st2,fun)        
- 
+renameFunction:: (ST, (Fun String String)) -> (ST, Fun String String)  
+renameFunction  (table, fun) = (st,function) where
+    (st1, fun1) = replaceFuncName (table, fun)
+    (st2, fun2) = replaceFuncArgs (st1, fun1)  
+    (st, function) = replaceFuncExp (st2,fun2)        
+    
+--renameFunction:: (ST, (Fun String String)) -> (ST, Fun String String)
+--renameFunction  (table, fun) = (st,(Fun (name,args,exp))) where
+--    (st1, (Fun (name,_,_))) = replaceFuncName (table, fun)
+--    (st2,(Fun (_,args,_))) = replaceFuncArgs (st1, fun)
+--    (st, (Fun (_,_,exp))) = replaceFuncExp (st2,fun)       
 
 replaceFuncName:: (ST,(Fun String String)) -> (ST,(Fun String String))
 replaceFuncName ((vList,fList,vNum,fNum),(Fun (name, args,exp))) = case (checkInList name fList) of 
@@ -47,7 +47,6 @@ replaceFuncName ((vList,fList,vNum,fNum),(Fun (name, args,exp))) = case (checkIn
 replaceFuncArgs:: (ST,(Fun String String)) -> (ST, (Fun String String))
 replaceFuncArgs (symTable,(Fun (name,args,exp))) = (table, (Fun (name, arguments, exp))) where
     (table, arguments) = replaceFuncArg symTable args
-
 
 replaceFuncArg:: ST -> [String] -> (ST, [String])
 replaceFuncArg tble [] = (tble, [])
@@ -67,63 +66,57 @@ replaceFuncExp (table, (Fun (n,a,exp))) = (table, (Fun (n,a,expression))) where
     expression = replaceExpName (table,exp)
       
 replaceExpName:: (ST, (Exp String String)) -> (Exp String String)
-replaceExpName ((vList, fList, vNum, fNum), exp) = case exp of
-    (VAR exp) -> case (checkInList exp vList) of 
-        True -> VAR exp1 where
-            index = (getIndex exp vList)
-            (str,num) = vList !! index
-            funList1 = funList
-            exp1 = ("X" ++ show num)
-        False -> error $ "No Argument for variable: VAR " ++ exp
+replaceExpName (table, exp) = case exp of
+    VAR exp1 -> handleVarExp (table, exp)
         
     ADD exp1 exp2 -> ADD express1 express2 where
-        express1 = replaceExpName ((vList, fList, vNum, fNum), exp1)
-        express2 = replaceExpName ((vList, fList, vNum, fNum), exp2)
+        express1 = replaceExpName (table, exp1)
+        express2 = replaceExpName (table, exp2)
       
     SUB exp1 exp2 -> SUB express1 express2 where 
-        express1 = replaceExpName ((vList, fList, vNum, fNum), exp1)
-        express2 = replaceExpName ((vList, fList, vNum, fNum), exp2)
+        express1 = replaceExpName (table, exp1)
+        express2 = replaceExpName (table, exp2)
          
     MUL exp1 exp2 -> MUL express1 express2 where 
-        express1 = replaceExpName ((vList, fList, vNum, fNum), exp1)
-        express2 = replaceExpName ((vList, fList, vNum, fNum), exp2)
+        express1 = replaceExpName (table, exp1)
+        express2 = replaceExpName (table, exp2)
         
     DIV exp1 exp2 -> DIV express1 express2 where 
-        express1 = replaceExpName ((vList, fList, vNum, fNum), exp1)
-        express2 = replaceExpName ((vList, fList, vNum, fNum), exp2)
+        express1 = replaceExpName (table, exp1)
+        express2 = replaceExpName (table, exp2)
         
     NEG exp1 -> NEG express1 where
-        express1 = replaceExpName ((vList, fList, vNum, fNum), exp1)
+        express1 = replaceExpName (table, exp1)
         
     CONST exp1 -> CONST exp1 
          
     COND bexp1 exp1 exp2 -> COND bexpress1 express1 express2 where
-        bexpress1 = replaceBexpName ((vList, fList, vNum, fNum), bexp1)
-        express1 = replaceExpName ((vList, fList, vNum, fNum), exp1)
-        express2 = replaceExpName ((vList, fList, vNum, fNum), exp2)
+        bexpress1 = replaceBexpName (table, bexp1)
+        express1 = replaceExpName (table, exp1)
+        express2 = replaceExpName (table, exp2)
             
     LET funcs exp2 -> LET funcs2 expression where
-        (t1, funcs1) = letFunctionP1 ((vList, fList, vNum, fNum), funcs)
+        (t1, funcs1) = letFunctionP1 (table, funcs)
         funcs2 = map (\func ->  renameLetFunction (t1, func)) funcs1        
         expression = replaceExpName (t1, exp2)        
       
     APP exp1 exps -> APP expression1 expressions where
-        expression1 = replaceAppString ((vList, fList, vNum, fNum), exp1)
-        expressions = map (\expr -> replaceExpName ((vList, fList, vNum, fNum), expr)) exps
+        expression1 = replaceAppString (table, exp1)
+        expressions = map (\expr -> replaceExpName (table, expr)) exps
     
     
 replaceBexpName:: (ST, (BExp String String)) -> (BExp String String)
 replaceBexpName (table, exp) = case exp of
 
-    Lt exp1 exp2  -> Lt expression1 expression2 where
+    Lt exp1 exp2 -> Lt expression1 expression2 where
         expression1 = replaceExpName (table, exp1)
         expression2 = replaceExpName (table, exp2)
         
-    Gt exp1 exp2  -> Gt expression1 expression2 where
+    Gt exp1 exp2 -> Gt expression1 expression2 where
         expression1 = replaceExpName (table, exp1)
         expression2 = replaceExpName (table, exp2)
         
-    Eq exp1 exp2  -> Eq expression1 expression2 where
+    Eq exp1 exp2 -> Eq expression1 expression2 where
         expression1 = replaceExpName (table, exp1)
         expression2 = replaceExpName (table, exp2)
         
@@ -131,15 +124,24 @@ replaceBexpName (table, exp) = case exp of
         bexpression1 = replaceBexpName (table, exp1)
         bexpression2 = replaceBexpName (table, exp2)
         
-    OR exp1 exp2  -> OR bexpression1 bexpression2 where
+    OR exp1 exp2 -> OR bexpression1 bexpression2 where
         bexpression1 = replaceBexpName (table, exp1)
         bexpression2 = replaceBexpName (table, exp2)
         
-    NOT exp1      -> NOT bexpression1 where
+    NOT exp1 -> NOT bexpression1 where
         bexpression1 = replaceBexpName (table, exp1)
-        
-    TRUE          -> TRUE    
-    FALSE         -> FALSE
+    TRUE -> TRUE    
+    FALSE-> FALSE 
+ 
+handleVarExp:: (ST, Exp String String) -> (Exp String String)
+handleVarExp ((vList, fList, vNum, fNum), exp) = case exp of
+    (VAR exp) -> case (checkInList exp vList) of 
+        True -> VAR exp1 where
+            index = (getIndex exp vList)
+            (str,num) = vList !! index
+            funList1 = funList
+            exp1 = ("X" ++ show num)
+        False -> error $ "No Argument for variable: VAR " ++ exp
     
 replaceAppString:: (ST, String) -> (String)
 replaceAppString ((vList, fList, vNum, fNum), str) = case (checkInList str fList) of 
@@ -160,23 +162,23 @@ renameLetFunction:: (ST, Fun String String) -> (Fun String String)
 renameLetFunction  (table, fun) = fun2 where
     (st1, fun1) = replaceFuncArgs (table, fun)
     (st, fun2) = replaceFuncExp (st1,fun1)
-    
-   
+
 checkInList:: String -> [AItem] -> Bool
 checkInList item list = (item `elem` (map fst list))
  
 getIndex:: String -> [AItem] -> Int
 getIndex item list = fromJust (elemIndex item (map fst list))
- 
- 
+  
+
+--for testing purposes
 fun1 = (Prog [Fun ("main",["x","y","a","b"],(COND (Lt (VAR "a") (VAR "b")) (VAR "x") (VAR "y") ))])
       
 test3 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
              ,Fun ("f",["z"], (LET 
                    [Fun ("g",["a"],MUL (VAR "z") (VAR "a"))
-                   ,Fun ("h",["d","e"], DIV (VAR "d") (VAR "a"))]
-                     (ADD (APP "h" [VAR "e"])
-                     (APP "h" [VAR "e",CONST 7])) ))])
+                   ,Fun ("h",["d","e"], DIV (VAR "d") (VAR "e"))]
+                     (ADD (APP "h" [VAR "x"])
+                     (APP "h" [VAR "y",CONST 7])) ))])
 test5 = (Prog 
              [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
              ,Fun ("f",["x"], (LET 
