@@ -171,6 +171,9 @@ getAItem name list =  (name,alias) where
  
  
 fun1 = (Prog [Fun ("main",["x","y","a","b"],(COND (Lt (VAR "a") (VAR "b")) (VAR "x") (VAR "y") ))])
+
+ 
+fun2 = (Prog [Fun ("main",["x","y","a","b"],(ADD (APP "h" [VAR "x"]))])
       
 test3 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
              ,Fun ("f",["z"], (LET 

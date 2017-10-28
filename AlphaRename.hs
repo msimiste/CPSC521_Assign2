@@ -14,10 +14,10 @@ type AList = ([AItem],Int)
 type ST = ([AItem],[AItem], Int, Int)
 
 
-varList::  (Prog String String) -> (Prog String String)
-varList (Prog prog) = (Prog functions) where 
-        (table, functions) = goFun (([],[],1,1),funcs)
-        funcs = funList (Prog prog)
+alphaRename::  (Prog String String) -> (Prog String String)
+alphaRename (Prog prog) = (Prog functions) where 
+            (table, functions) = goFun (([],[],1,1),funcs)
+            funcs = funList (Prog prog)
 
 funList:: (Prog String String) -> [Fun String String]
 funList (Prog funcs) = funcs
@@ -169,6 +169,8 @@ getAItem name list =  (name,alias) where
  
  
 fun1 = (Prog [Fun ("main",["x","y","a","b"],(COND (Lt (VAR "a") (VAR "b")) (VAR "x") (VAR "y") ))])
+
+
       
 test3 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
              ,Fun ("f",["z"], (LET 
