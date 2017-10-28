@@ -126,6 +126,42 @@ getTableNames:: Table -> [String]
 getTableNames (ffList, cList) = map (\(name,_,_) -> name) ffList
 
 
+fun3 = (Prog [Fun ("main", ["x","y","z","n"], 
+                (LET [Fun ("f1",["v"], (ADD (VAR "x")(APP "f2" [VAR "v"]))),
+                Fun ("f2", ["j"], 
+                (LET [Fun ("g2",["b"],(ADD (VAR "b") (APP "f3" [VAR "j"])))] 
+                (ADD (APP "g2" [VAR "y"]) (APP "f3" [VAR "x"])))),
+                Fun ("f3",["k"], 
+                (LET [Fun ("g3", ["c"], (MUL (VAR "c") (APP "f1" [VAR "k"])))]
+                 (APP "g3" [VAR "z"])))]
+                      (APP "f1" [VAR "n"])))])
+
+fun1 = (Prog [Fun ("main",["x","y","a","b"],(COND (Lt (VAR "a") (VAR "b")) (VAR "x") (VAR "y") ))])
+
+fun2 = (Prog 
+             [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
+             ,Fun ("f",["x"], (LET 
+                   [Fun ("g",["y"],ADD (VAR "y") (VAR "x"))
+                   ,Fun ("h",["x","y"], ADD (APP "main" [VAR "x"])(VAR "y"))]
+                     (ADD (APP "g" [VAR "x"])
+                     (APP "h" [VAR "x"])) ))])
+                     
+      
+test3 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
+             ,Fun ("f",["z"], (LET 
+                   [Fun ("g",["a"],MUL (VAR "z") (VAR "a"))
+                   ,Fun ("h",["d","e"], DIV (VAR "d") (VAR "e"))]
+                     (ADD (APP "h" [VAR "z"])
+                     (APP "h" [VAR "z",CONST 7])) ))])
+test5 = (Prog 
+             [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
+             ,Fun ("f",["x"], (LET 
+                   [Fun ("g",["y"],MUL (VAR "y") (VAR "x"))
+                   ,Fun ("h",["x","y"], DIV (VAR "x") (VAR "y"))]
+                     (ADD (APP "g" [VAR "x"])
+                     (APP "h" [VAR "x",CONST 7])) ))])
+                     
+testTable = ([("y","X1"),("x","X0")],[("main","X9")],2,1)::ST
 --
 --
 ----start::
@@ -139,4 +175,15 @@ getTableNames (ffList, cList) = map (\(name,_,_) -> name) ffList
 ----5. compare list of final functions to previous list of Final functions
 ----6. if step 5 is such that both lists are equal, stop otherwise goto step 4
 
-
+--table compare
+    -- start with a Table of initial values (obtained from the lambdaLift function    
+    -- runUpdateVars on the table
+        --updateVars:: Table -> Table
+        -- updateVars does the following:
+        --for function_(n0 in the list of FinalFunctions
+            -- for each function_(y) that calls function_(n) , add the freevariables of function_(n) to functions_(y)'s free variable list
+        -- send Table to tableCompare function.
+        --tableCompare:: Table -> Bool
+        -- if tableCompare == True then return table else run updateVars on table again.
+        
+        --tableCompare

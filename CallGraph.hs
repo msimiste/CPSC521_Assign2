@@ -15,9 +15,13 @@ produceCallGraph (Prog prog) = (functions, callG) where
    
 funcList :: (Prog String String) ->[Fun String String]
 funcList (Prog prog) = functions where
-    (Prog functions) = alphaRename (Prog prog)
+    (symTab, (Prog functions)) = alphaRename (Prog prog)
 
-
+--for testing
+getSymTable:: (Prog String String) -> ST
+getSymTable (Prog prog) = table where
+    (table, (Prog functions)) = alphaRename (Prog prog)
+    
 processListOfFuncs:: (CallGraph, [Fun String String]) -> (CallGraph, [Fun String String])
 processListOfFuncs (callG,[]) = (callG,[])
 processListOfFuncs (callG, (f:funcs)) = (callGraph, functions) where
@@ -27,10 +31,11 @@ processListOfFuncs (callG, (f:funcs)) = (callGraph, functions) where
     
     
 processFunc:: (CallGraph, (Fun String String)) -> (CallGraph, (Fun String String))
-processFunc (callG, (Fun (name,args, exp))) = (callGraph, function) where        
-        cg1 = addFuncToCallGraph callG name
+processFunc (callG, (Fun (name,args, exp))) = (callGraph, function) where
+        cg1 = updateCallGraph callG name
+        cg2 = addFuncToCallGraph cg1 name
         function = (Fun (name,args, exp1)) 
-        (callGraph, exp1) =  processExpression (cg1, exp)
+        (callGraph, exp1) =  processExpression (cg2, exp)
         
         
 processExpression:: (CallGraph, Exp String String) -> (CallGraph, Exp String String)
@@ -107,7 +112,9 @@ processBexpression (callG, exp) = case (exp) of
  
 
 updateCallGraph :: CallGraph -> String -> CallGraph
-updateCallGraph [] name = error "Malformed Program"
+updateCallGraph [] name = case (name == "f1") of
+    True  -> [(name,[])]
+    False -> error "Malformed Program"
 updateCallGraph ((func,list):cg) name = case (name `elem` list) of 
     True -> ((func,list):cg)
     False -> ((func,name:list):cg)
@@ -124,8 +131,8 @@ letUpdate ((nm,list):cg) functions = graph where
     names = listOfNames functions   
     graph = ((nm, list1):cg)
     list1 = (mergeUnique names list)
-    --graph = ((nm, names ++ list):cg) -- remove duplicates from list concat
-   
+    --graph = ((nm, names ++ list1):cg) -- remove duplicates from list concat
+
 
 processListOfExpressions:: (CallGraph, [Exp String String]) -> (CallGraph, [Exp String String])
 processListOfExpressions (callG, []) = (callG,[])

@@ -14,8 +14,8 @@ type AList = ([AItem],Int)
 type ST = ([AItem],[AItem], Int, Int)
 
 
-alphaRename::  (Prog String String) -> (Prog String String)
-alphaRename (Prog prog) = Prog functions where 
+alphaRename::  (Prog String String) -> (ST, (Prog String String))
+alphaRename (Prog prog) = (table, (Prog functions)) where 
             (table, functions) = goFun (([],[],1,1),funcs)
             funcs = funList (Prog prog)
 
@@ -168,29 +168,5 @@ getAItem name list =  (name,alias) where
     (str, alias) = list !! index
  
  
-fun1 = (Prog [Fun ("main",["x","y","a","b"],(COND (Lt (VAR "a") (VAR "b")) (VAR "x") (VAR "y") ))])
 
-fun2 = (Prog 
-             [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
-             ,Fun ("f",["x"], (LET 
-                   [Fun ("g",["y"],ADD (VAR "y") (VAR "x"))
-                   ,Fun ("h",["x","y"], ADD (APP "main" [VAR "x"])(VAR "y"))]
-                     (ADD (APP "g" [VAR "x"])
-                     (APP "h" [VAR "x"])) ))])
-                     
-      
-test3 = (Prog [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
-             ,Fun ("f",["z"], (LET 
-                   [Fun ("g",["a"],MUL (VAR "z") (VAR "a"))
-                   ,Fun ("h",["d","e"], DIV (VAR "d") (VAR "e"))]
-                     (ADD (APP "h" [VAR "z"])
-                     (APP "h" [VAR "z",CONST 7])) ))])
-test5 = (Prog 
-             [Fun ("main",["x","y"],(ADD (VAR "x") (VAR "y")))
-             ,Fun ("f",["x"], (LET 
-                   [Fun ("g",["y"],MUL (VAR "y") (VAR "x"))
-                   ,Fun ("h",["x","y"], DIV (VAR "x") (VAR "y"))]
-                     (ADD (APP "g" [VAR "x"])
-                     (APP "h" [VAR "x",CONST 7])) ))])
 
-testTable = ([("y","X1"),("x","X0")],[("main","X9")],2,1)::ST
