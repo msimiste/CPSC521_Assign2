@@ -32,17 +32,31 @@ lambdaFunction:: (Table, Fun String String) -> Table
 lambdaFunction (inTable, (Fun (name,args,exp))) = outTable where
         table1 = addFuncToTable inTable (funcToFF (Fun(name,args,exp)))     
         outTable = lambdaExpression (table1, (Fun(name,args,exp)), exp)
-        --func = (Fun (name,args,exp))        
+        --func = (Fun (name,args,exp)) 
+            
+letLambdaFunctions:: (Table, [Fun String String]) -> Table
+letLambdaFunctions (table, []) = table
+letLambdaFunctions (table, (f:funs)) = outTable where
+    tb1 = letLambdaFunction (table , f)
+    outTable = letLambdaFunctions (tb1, funs)
+
+letLambdaFunction:: (Table, (Fun String String)) -> Table
+letLambdaFunction (table, (Fun (name, args, exp))) = outTable where
+    outTable = lambdaExpression (table, (Fun (name, args, exp)), exp)
+
 
 lambdaExpression:: (Table, (Fun String String), (Exp String String)) -> Table
 lambdaExpression (inTable, (Fun (name,args,e)), exp) = case exp of
 
-    LET funcs exp1 -> table where       
-            table1 =   listOfLambdaExpressions (inTable funcs, exp1)--lambdaFunctions (inTable, funcs) 
-            table = lambdaExpression (table1, (Fun(name,args,e)), exp1) 
+    LET funcs exp1 -> table2 where       
+            table = lambdaExpression (inTable, (Fun(name,args,e)), exp1) 
+            (table1, functions) =  lambdaLetFunctions (table, funcs)--lambdaFunctions (inTable, funcs) 
+            (table2) = letLambdaFunctions (table1, functions)
+            
           
-    APP name exp1 -> table where
-        (table) = listOfLambdaExpressions (inTable, (Fun(name,args,e)), exp1)
+    APP fName exp1 -> table where
+        table1 = handleApp (inTable, (Fun (name,args,e)), exp1)-- updateTableFreeVar inTable (name, exp1)
+        (table) = listOfLambdaExpressions (table1, (Fun(name,args,e)), exp1)
 
     VAR exp1 -> table where
         table = updateTableFreeVar inTable (name, exp1)
@@ -101,10 +115,19 @@ lambdaBexpression (inTable, func, exp) = case exp of
     TRUE  -> (inTable)    
     FALSE -> (inTable)
 
-lambdaLetFunctions:: (Table, [Fun String String], (Exp String STring)) -> Table
-lambdaLetFunctions (table, (fun:funcList), exp) = outTable where
-    tb1 = addFuncToTable (table, (funcToFF fun))
-    outTable = lambdaLetFunctions (tb1, funcList, exp)
+
+
+handleApp:: (Table, (Fun String String), [(Exp String String)]) -> Table
+handleApp (inTable, func, []) = inTable
+handleApp (inTable, func, (e:exps)) = table where
+    tb1 = lambdaExpression (inTable, func, e)
+    table = handleApp (tb1, func, exps)
+    
+lambdaLetFunctions:: (Table, [Fun String String]) -> (Table, [Fun String String])
+lambdaLetFunctions (table, []) = (table, [])
+lambdaLetFunctions (table, (fun:funcList)) = (outTable, (fun:funcList)) where
+     tb1 = addFuncToTable table (funcToFF fun)
+     (outTable, functions) = lambdaLetFunctions (tb1, funcList)
     
 listOfLambdaExpressions:: (Table, (Fun String String), [(Exp String String)]) -> Table
 listOfLambdaExpressions (table, func, []) = table
@@ -125,22 +148,30 @@ updateTableFreeVar (ffList, cList) (name,var) = table1 where
 --        False ->  (n,args,(var:vars)) --error "Var plus list: " ++ (var:vars)--
 --    False -> (n,args,vars)) ffList
  
+ 
 updateFFList:: [FinalFunction] -> String -> String -> [FinalFunction]
 updateFFList [] name var = []
 updateFFList (ff:ffList) name var = functions where
     (fun1) = updateFFSingle ff name var
     (funs1) = updateFFList ffList name var
     functions = (fun1:funs1)
-
+    
 updateFFSingle:: FinalFunction -> String -> String -> FinalFunction
 updateFFSingle (nm,args,vars) name var = case (name == nm) of
         True -> case (var `elem` vars) of
             True -> finalFunction where
                 finalFunction = (nm,args,vars)
             False -> finalFunction where
-                finalFunction = (nm, args, (var:vars))
+                finalFunction = (nm, args, (var:vars)) 
         False -> (nm,args,vars)
-            
+
+getFFIndex:: String -> [FinalFunction] -> Int
+getFFIndex item list = fromJust (elemIndex item (map (\(name,args,vars) -> name) list))
+
+getFFItem:: String -> [FinalFunction] -> FinalFunction
+getFFItem name list = finalFunc where
+    index = getFFIndex name list
+    finalFunc = list !! index            
             
 addFuncToTable :: Table -> FinalFunction-> Table
 addFuncToTable ([],[]) (name, args,vList)= ((name,args,vList):[],[])
