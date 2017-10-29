@@ -139,8 +139,7 @@ replaceAppString:: (ST, String) -> (ST,(String))
 replaceAppString ((vList, fList, vNum, fNum), str) = case (checkInList str fList) of 
     True -> ((vList,fList,vNum,fNum), alias) where
         (name, alias) = getAItem str fList
-    False ->  error $ "Function is not found: " ++ str --((vList,((str,alias):fList),vNum,(fNum+1)), alias) where
-        --alias = "f" ++ show fNum
+    False ->  error $ "Function is not found: " ++ str 
     
 letFunctionP1:: (ST, [Fun String String]) -> (ST,[Fun String String])
 letFunctionP1 (table,[]) = (table,[])

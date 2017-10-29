@@ -30,18 +30,19 @@ lambdaFunctions (inTable,(f:funcs)) = table where
     
 lambdaFunction:: (Table, Fun String String) -> Table 
 lambdaFunction (inTable, (Fun (name,args,exp))) = outTable where
-        table1 = addFuncToTable inTable (funcToFF func)     
-        outTable = lambdaExpression (table1, func, exp)
-        func = (Fun (name,args,exp))        
+        table1 = addFuncToTable inTable (funcToFF (Fun(name,args,exp)))     
+        outTable = lambdaExpression (table1, (Fun(name,args,exp)), exp)
+        --func = (Fun (name,args,exp))        
 
 lambdaExpression:: (Table, (Fun String String), (Exp String String)) -> Table
 lambdaExpression (inTable, (Fun (name,args,e)), exp) = case exp of
 
-    LET funcs exp1 -> table where
-        table1 = lambdaFunctions (inTable, funcs)
-        table = lambdaExpression (table1, (Fun(name,args,e)), exp1)  
+    LET funcs exp1 -> table where       
+            table1 =   listOfLambdaExpressions (inTable funcs, exp1)--lambdaFunctions (inTable, funcs) 
+            table = lambdaExpression (table1, (Fun(name,args,e)), exp1) 
           
-    APP name exp1 -> inTable 
+    APP name exp1 -> table where
+        (table) = listOfLambdaExpressions (inTable, (Fun(name,args,e)), exp1)
 
     VAR exp1 -> table where
         table = updateTableFreeVar inTable (name, exp1)
@@ -100,19 +101,47 @@ lambdaBexpression (inTable, func, exp) = case exp of
     TRUE  -> (inTable)    
     FALSE -> (inTable)
 
+lambdaLetFunctions:: (Table, [Fun String String], (Exp String STring)) -> Table
+lambdaLetFunctions (table, (fun:funcList), exp) = outTable where
+    tb1 = addFuncToTable (table, (funcToFF fun))
+    outTable = lambdaLetFunctions (tb1, funcList, exp)
+    
+listOfLambdaExpressions:: (Table, (Fun String String), [(Exp String String)]) -> Table
+listOfLambdaExpressions (table, func, []) = table
+listOfLambdaExpressions (table, func, (e:exps)) = outTable where
+    (tb1) = lambdaExpression (table, func, e)
+    (outTable) = listOfLambdaExpressions (tb1, func, exps)
+    
      
 updateTableFreeVar:: Table -> (String,String) -> Table
 updateTableFreeVar (ffList, cList) (name,var) = table1 where
     newList = updateFFList ffList name var
     table1 = (newList,cList)
     
+--updateFFList:: [FinalFunction] -> String -> String -> [FinalFunction]
+--updateFFList ffList name var = map (\(n,args,vars) -> case (n == name) of 
+--    True -> case (var `elem` vars) of 
+--        True -> (n,args,vars) --error "The var is: " ++ var--
+--        False ->  (n,args,(var:vars)) --error "Var plus list: " ++ (var:vars)--
+--    False -> (n,args,vars)) ffList
+ 
 updateFFList:: [FinalFunction] -> String -> String -> [FinalFunction]
-updateFFList ffList name var = map (\(n,args,vars) -> case (n == name) of 
-    True -> case (var `elem` vars) of 
-        True -> (n,args,vars)
-        False -> (n,args,(var:vars))
-    False -> (n,args,vars)) ffList
-    
+updateFFList [] name var = []
+updateFFList (ff:ffList) name var = functions where
+    (fun1) = updateFFSingle ff name var
+    (funs1) = updateFFList ffList name var
+    functions = (fun1:funs1)
+
+updateFFSingle:: FinalFunction -> String -> String -> FinalFunction
+updateFFSingle (nm,args,vars) name var = case (name == nm) of
+        True -> case (var `elem` vars) of
+            True -> finalFunction where
+                finalFunction = (nm,args,vars)
+            False -> finalFunction where
+                finalFunction = (nm, args, (var:vars))
+        False -> (nm,args,vars)
+            
+            
 addFuncToTable :: Table -> FinalFunction-> Table
 addFuncToTable ([],[]) (name, args,vList)= ((name,args,vList):[],[])
 addFuncToTable  (ffList,cList) (name,args,vList) = case (name `elem` (getTableNames (ffList,cList))) of 
@@ -146,7 +175,7 @@ getTableNames (ffList, cList) = map (\(name,_,_) -> name) ffList
     -- runUpdateVars on the table
         --updateVars:: Table -> Table
         -- updateVars does the following:
-        --for function_(n0 in the list of FinalFunctions
+        --for function_(n) in the list of FinalFunctions
             -- for each function_(y) that calls function_(n) , add the freevariables of function_(n) to functions_(y)'s free variable list
         -- send Table to tableCompare function.
         --tableCompare:: Table -> Bool
