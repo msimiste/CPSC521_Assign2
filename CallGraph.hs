@@ -2,6 +2,8 @@ module  CallGraph where
 
 import AlphaRename
 import AST
+import Data.List
+import Data.Maybe
 
 type CallGraph = [CallItem]
 type CallItem = (String, [String])
@@ -32,19 +34,20 @@ processListOfFuncs (callG, (f:funcs)) = (callGraph, functions) where
     
 processFunc:: (CallGraph, (Fun String String)) -> (CallGraph, (Fun String String))
 processFunc (callG, (Fun (name,args, exp))) = (callGraph, function) where
-        cg1 = updateCallGraph callG name
-        cg2 = addFuncToCallGraph cg1 name
-        function = (Fun (name,args, exp1)) 
+        --cg1 = updateCallGraph callG name
+        cg2 = addFuncToCallGraph callG name        
         (callGraph, exp1) =  processExpression (cg2, exp)
+        function = (Fun (name,args, exp1)) 
         
         
 processExpression:: (CallGraph, Exp String String) -> (CallGraph, Exp String String)
 processExpression (callG, exp) = case exp of 
 
     LET funcs exp1 -> (callGraph, expression) where       
-        call = letUpdate callG funcs         
-        (cg2, fcns) = processListOfFuncs (call, funcs)               
-        (callGraph, expression) = processExpression (cg2, exp1)        
+        --call = letUpdate callG funcs         
+        (cg1, expression) = processExpression(callG, exp1)
+        (callGraph, fcns) = processListOfFuncs (cg1, funcs)               
+        --(callGraph, expression) = processExpression (cg2, exp1)        
         
     APP name (e:exps) ->  (callGraph, expression) where
         (cg1) = updateCallGraph callG name
@@ -56,19 +59,19 @@ processExpression (callG, exp) = case exp of
      
     ADD exp1 exp2 -> (callGraph, expression) where
           (cg1, expression1) = processExpression (callG, exp1)
-          (callGraph, expression) = processExpression (cg1, expression1)
+          (callGraph, expression) = processExpression (cg1, exp2)
           
     SUB exp1 exp2 -> (callGraph, expression) where
         (cg1, expression1) = processExpression (callG, exp1)
-        (callGraph, expression) = processExpression (cg1, expression1)
+        (callGraph, expression) = processExpression (cg1, exp2)
     
     MUL exp1 exp2 -> (callGraph, expression) where
         (cg1, expression1) = processExpression (callG, exp1)
-        (callGraph, expression) = processExpression (cg1, expression1)
+        (callGraph, expression) = processExpression (cg1, exp2)
     
     DIV exp1 exp2 -> (callGraph, expression) where
         (cg1, expression1) = processExpression (callG, exp1)
-        (callGraph, expression) = processExpression (cg1, expression1)
+        (callGraph, expression) = processExpression (cg1, exp2)
     
     NEG exp1 -> (callGraph, expression) where
         (callGraph, expression) = processExpression (callG, exp1)
@@ -86,33 +89,33 @@ processBexpression (callG, exp) = case (exp) of
 
     Lt exp1 exp2  -> (callGraph, Lt expression1 expression) where
         (cg1, expression1) = processExpression (callG, exp1)
-        (callGraph, expression) = processExpression (callG, exp2)         
+        (callGraph, expression) = processExpression (cg1, exp2)         
         
     Gt exp1 exp2  -> (callGraph, Gt  expression1 expression) where
         (cg1, expression1) = processExpression (callG, exp1)
-        (callGraph, expression) = processExpression (callG, exp2)
+        (callGraph, expression) = processExpression (cg1, exp2)
         
     Eq exp1 exp2  -> (callGraph, Eq  expression1 expression) where
-        (cg1, expression1) = processExpression (callG, exp1)
-        (callGraph, expression) = processExpression (callG, exp2)
+        (cg1, expression1) = processExpression (callG,exp1)
+        (callGraph, expression) = processExpression (cg1, exp2)
         
-    OR exp1 exp2  -> (callGraph, OR  expression1 expression) where
-        (cg1, expression1) = processBexpression (callG, exp1)
-        (callGraph, expression) = processBexpression (callG, exp2)
+    OR bexp1 bexp2  -> (callGraph, OR  expression1 expression) where
+        (cg1, expression1) = processBexpression (callG, bexp1)
+        (callGraph, expression) = processBexpression (cg1, bexp2)
         
-    AND exp1 exp2  -> (callGraph, AND  expression1 expression) where
-            (cg1, expression1) = processBexpression (callG, exp1)
-            (callGraph, expression) = processBexpression (callG, exp2)
+    AND bexp1 bexp2  -> (callGraph, AND  expression1 expression) where
+            (cg1, expression1) = processBexpression (callG, bexp1)
+            (callGraph, expression) = processBexpression (cg1, bexp2)
         
-    NOT exp1 -> (callGraph, NOT expression) where
-            (callGraph, expression) = processBexpression (callG, exp1)                             
+    NOT bexp1 -> (callGraph, NOT expression) where
+            (callGraph, expression) = processBexpression (callG, bexp1)                             
           
     TRUE  -> (callG, TRUE)    
     FALSE -> (callG, FALSE)
  
 
 updateCallGraph :: CallGraph -> String -> CallGraph
-updateCallGraph [] name = case (name == "f1") of
+updateCallGraph [] name = case (name == "f0") of
     True  -> [(name,[])]
     False -> error "Malformed Program"
 updateCallGraph ((func,list):cg) name = case (name `elem` list) of 
@@ -122,7 +125,8 @@ updateCallGraph ((func,list):cg) name = case (name `elem` list) of
 addFuncToCallGraph :: CallGraph -> String -> CallGraph
 addFuncToCallGraph [] name = (name, []):[]
 addFuncToCallGraph graph name = case (name `elem` (map fst graph)) of 
-    True -> graph
+    True -> outGraph where
+        outGraph = pushToFront name graph
     False -> (name,[]):graph
 
 letUpdate:: CallGraph -> [Fun String String] -> CallGraph
@@ -133,7 +137,16 @@ letUpdate ((nm,list):cg) functions = graph where
     list1 = (mergeUnique names list)
     --graph = ((nm, names ++ list1):cg) -- remove duplicates from list concat
 
+getGraphIndex:: String -> CallGraph -> Int
+getGraphIndex item list = fromJust (elemIndex item (map fst list))
 
+
+pushToFront:: String -> CallGraph -> CallGraph
+pushToFront name cGraph = graph where
+    (frontGraph, ((b,lst):backGraph)) = splitAt (getGraphIndex name cGraph) cGraph
+    graph = (name,lst):(frontGraph ++ backGraph)
+    
+    
 processListOfExpressions:: (CallGraph, [Exp String String]) -> (CallGraph, [Exp String String])
 processListOfExpressions (callG, []) = (callG,[])
 processListOfExpressions (callG, (e:exps)) = (callGraph,expressions) where

@@ -16,7 +16,7 @@ type ST = ([AItem],[AItem], Int, Int)
 
 alphaRename::  (Prog String String) -> (ST, (Prog String String))
 alphaRename (Prog prog) = (table, (Prog functions)) where 
-            (table, functions) = goFun (([],[],1,1),funcs)
+            (table, functions) = goFun (([],[],0,0),funcs)
             funcs = funList (Prog prog)
 
 funList:: (Prog String String) -> [Fun String String]
@@ -123,16 +123,16 @@ replaceBexpName (table, exp) = case exp of
         expression1 = replaceExpName (table, exp1)
         expression2 = replaceExpName (table, exp2)
         
-    AND exp1 exp2 -> AND bexpression1 bexpression2 where
-        bexpression1 = replaceBexpName (table, exp1)
-        bexpression2 = replaceBexpName (table, exp2)
+    AND bexp1 bexp2 -> AND bexpression1 bexpression2 where
+        bexpression1 = replaceBexpName (table, bexp1)
+        bexpression2 = replaceBexpName (table, bexp2)
         
-    OR exp1 exp2  -> OR bexpression1 bexpression2 where
-        bexpression1 = replaceBexpName (table, exp1)
-        bexpression2 = replaceBexpName (table, exp2)
+    OR bexp1 bexp2  -> OR bexpression1 bexpression2 where
+        bexpression1 = replaceBexpName (table, bexp1)
+        bexpression2 = replaceBexpName (table, bexp2)
         
-    NOT exp1      -> NOT bexpression1 where
-        bexpression1 = replaceBexpName (table, exp1)
+    NOT bexp1      -> NOT bexpression1 where
+        bexpression1 = replaceBexpName (table, bexp1)
         
     TRUE          -> TRUE    
     FALSE         -> FALSE
