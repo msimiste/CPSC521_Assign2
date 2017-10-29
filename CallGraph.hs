@@ -34,7 +34,6 @@ processListOfFuncs (callG, (f:funcs)) = (callGraph, functions) where
     
 processFunc:: (CallGraph, (Fun String String)) -> (CallGraph, (Fun String String))
 processFunc (callG, (Fun (name,args, exp))) = (callGraph, function) where
-        --cg1 = updateCallGraph callG name
         cg2 = addFuncToCallGraph callG name        
         (callGraph, exp1) =  processExpression (cg2, exp)
         function = (Fun (name,args, exp1)) 
@@ -43,8 +42,7 @@ processFunc (callG, (Fun (name,args, exp))) = (callGraph, function) where
 processExpression:: (CallGraph, Exp String String) -> (CallGraph, Exp String String)
 processExpression (callG, exp) = case exp of 
 
-    LET funcs exp1 -> (callGraph, expression) where       
-        --call = letUpdate callG funcs         
+    LET funcs exp1 -> (callGraph, expression) where      
         (cg1, expression) = processExpression(callG, exp1)
         (callGraph, fcns) = processListOfFuncs (cg1, funcs)               
         --(callGraph, expression) = processExpression (cg2, exp1)        
