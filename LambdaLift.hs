@@ -16,11 +16,27 @@ type FinalFunction = (Name, Arguments,FreeVars)
 type Table = ([FinalFunction],CallGraph)
 
 
-lambdaLift:: Table -> (Prog String String) -> Table
-lambdaLift inTable prog = table where
+lambdaLift:: (Prog String String) -> Table
+lambdaLift prog = table where
     (alphaFuncs, callGraph) = produceCallGraph prog
-    table = lambdaFunctions (inTable, alphaFuncs)
+    table1 = lambdaFunctions (([],callGraph), alphaFuncs)
+    table2 = updateVars table1
+    table = removeArgs table2
 
+removeArgs:: Table -> Table
+removeArgs (ffList, cg) = outTable where
+    ffs = parseArgs ffList
+    outTable = (ffs, cg)
+    
+parseArgs:: [FinalFunction] -> [FinalFunction]
+parseArgs ffList = outFF where
+    outFF = map parseArg ffList 
+
+parseArg:: FinalFunction -> FinalFunction
+parseArg finalF = (name,args,vars1) where
+    vars1 = extractVars finalF 
+    (name, args, vars) = finalF
+    
 lambdaFunctions:: (Table,[Fun String String]) -> (Table)
 lambdaFunctions (tble,[]) = tble
 lambdaFunctions (inTable,(f:funcs)) = table where
@@ -53,7 +69,6 @@ lambdaExpression (inTable, (Fun (name,args,e)), exp) = case exp of
             (table1, functions) =  lambdaLetFunctions (table, funcs)--lambdaFunctions (inTable, funcs) 
             (table2) = letLambdaFunctions (table1, functions)
             
-          
     APP fName exp1 -> table where
         table1 = handleApp (inTable, (Fun (name,args,e)), exp1)-- updateTableFreeVar inTable (name, exp1)
         (table) = listOfLambdaExpressions (table1, (Fun(name,args,e)), exp1)
@@ -194,7 +209,7 @@ tableCompare table1 table2 = (table1 == table2)
 updateVars:: Table -> Table
 updateVars inTable = outTable where
     tempTable = updateFinalFunctions inTable
-    outTable = case (tempTable == inTable) of
+    outTable = case (tableCompare inTable tempTable) of
         True -> tempTable
         False -> updateVars tempTable
        
