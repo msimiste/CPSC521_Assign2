@@ -33,8 +33,9 @@ modLetFuncs (table, (f:fs)) = funcs where
         funcs = (fun ++ funs)
     
 modFunc:: (Table, (Fun String String), [Fun String String]) -> [Fun String String]
-modFunc (tableT, (Fun (name,args,exp)), list) = ((Fun (name,args,expression)):functions) where
+modFunc (tableT, (Fun (name,args,exp)), list) = ((Fun (name,arguments,expression)):functions) where
     (expression, functions) = modFuncExpression (tableT,exp)
+    arguments = getFFArgs (fst tableT) name
  
 modFuncExpression:: (Table, (Exp String String)) -> ((Exp String String), [Fun String String])
 modFuncExpression (table, expr) = case expr of
@@ -59,7 +60,7 @@ modFuncExpression (table, expr) = case expr of
             (expression2, l2) = modFuncExpression (table, exp2)
             list = l1 ++ l2
         
-    MUL exp1 exp2 -> ((DIV expression1 expression2), list) where
+    MUL exp1 exp2 -> ((MUL expression1 expression2), list) where
             (expression1, l1) = modFuncExpression (table, exp1)
             (expression2, l2) = modFuncExpression (table, exp2)
             list = l1 ++ l2
@@ -121,9 +122,9 @@ addExpressions ((ffs,callG), name) = convertVars vars1 where
 convertVars:: [String] -> [Exp String String]
 convertVars list = map (\v -> VAR v) list
 
-
-
-
+getFFArgs:: [FinalFunction] -> String -> [String]
+getFFArgs ffList name = args where
+    (n,args,vars) =  getFFItem name ffList 
 
 
 

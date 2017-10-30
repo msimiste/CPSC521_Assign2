@@ -1,0 +1,62 @@
+Prog [Fun ("f0",["X0","X1","X2","X3"],APP "f1" [VAR "X3",VAR "X0",VAR "X1",VAR "X2"]),
+Fun ("f1",["X4"],ADD (VAR "X0") (APP "f2" [VAR "X4",VAR "X0",VAR "X1",VAR "X2"])),
+Fun ("f2",["X5"],ADD (APP "f4" [VAR "X1",VAR "X5",VAR "X2",VAR "X0",VAR "X1"]) (APP "f3" [VAR "X0",VAR "X2",VAR "X0",VAR "X1"])),Fun ("f4",["X6"],ADD (VAR "X6") (APP "f3" [VAR "X5",VAR "X2",VAR "X0",VAR "X1"])),Fun ("f3",["X7"],APP "f5" [VAR "X2",VAR "X7",VAR "X0",VAR "X1",VAR "X2"]),Fun ("f5",["X8"],DIV (VAR "X8") (APP "f1" [VAR "X7",VAR "X0",VAR "X1",VAR "X2"]))]
+
+
+fun f0(X0,X1,X2,X3) = f1(X3,X0,X1,X2)\n
+fun f1(X4) = X0+f2(X4,X0,X1,X2)\n
+fun f2(X5) = f4(X1,X5,X2,X0,X1)+f3(X0,X2,X0,X1)\n
+fun f4(X6) = X6+f3(X5,X2,X0,X1)\n
+fun f3(X7) = f5(X2,X7,X0,X1,X2)\n
+fun f5(X8) = X8/f1(X7,X0,X1,X2)\n
+
+
+"fun f0(X0,X1,X2,X3) = f1(X3,X0,X1,X2)\n
+fun f1(X4) = X0+f2(X4,X0,X1,X2)\n
+fun f2(X5) = f4(X1,X5,X2,X0,X1)+f3(X0,X2,X0,X1)\n
+fun f4(X6) = X6+f3(X5,X2,X0,X1)\n
+fun f3(X7) = f5(X2,X7,X0,X1,X2)\n
+fun f5(X8) = X8/f1(X7,X0,X1,X2)\n"
+
+
+fun f0(X0,X1,X2,X3) = f1(X3,X0,X1,X2)\nfun f1(X4) = X0+f2(X4,X0,X1,X2)\nfun f2(X5) = f4(X1,X5,X2,X0,X1)+f3(X0,X2,X0,X1)\nfun f4(X6) = X6+f3(X5,X2,X0,X1)\nfun f3(X7) = f5(X2,X7,X0,X1,X2)\nfun f5(X8) = X8/f1(X7,X0,X1,X2)\n
+
+
+
+("f0",["X0","X1","X2","X3"],["X3","X0","X1","X2"])]
+("f1",["X4"],["X0","X1","X2"]),
+("f2",["X5"],["X0","X1","X2"]),
+("f3",["X7"],["X2","X0","X1"]),
+("f4",["X6"],["X5","X2","X0","X1"]),
+[("f5",["X8"],["X7","X0","X1","X2"]),
+
+"fun f0(X0,X1,X2,X3) = f1(X3,X0,X1,X2)\n
+fun f1(X4) = X0+f2(X4,X0,X1,X2)\n
+fun f2(X5) = f4(X1,X5,X2,X0,X1)+f3(X0,X2,X0,X1)\n
+fun f4(X6) = X6+f3(X5,X2,X0,X1)\n
+fun f3(X7) = f5(X2,X7,X0,X1,X2)\n
+fun f5(X8) = X8*f1(X7,X0,X1,X2)\n"
+
+
+[("f5",["f1"]),("f3",["f5"]),("f4",["f3"]),("f2",["f3","f4"]),("f1",["f2"]),("f0",["f1"])]
+
+
+"fun f0(X0,X1,X2,X3) = f1(X3,X0,X1,X2)\n
+fun f1(X4,X0,X1,X2) = X0+f2(X4,X0,X1,X2)\n
+fun f2(X5,X0,X1,X2) = f4(X1,X5,X2,X0,X1)+f3(X0,X2,X0,X1)\n
+fun f4(X6,X5,X2,X0,X1) = X6+f3(X5,X2,X0,X1)\n
+fun f3(X7,X2,X0,X1) = f5(X2,X7,X0,X1,X2)\n
+fun f5(X8,X7,X0,X1,X2) = X8*f1(X7,X0,X1,X2)\n"
+
+
+
+
+("f0",["X0","X1","X2","X3"],["X3","X0","X1","X2"])]
+("f1",["X4"],["X4","X0","X1","X2"]),
+("f2",["X5"],["X0","X1","X2","X5"]),
+("f3",["X7"],["X2","X7","X0","X1"]),
+("f4",["X6"],["X5","X6","X2","X0","X1"]),
+[("f5",["X8"],["X7","X8","X0","X1","X2"]),
+
+
+]Prog [Fun ("f0",["X0","X1","X2","X3"],APP "f1" [VAR "X3",VAR "X4",VAR "X0",VAR "X1",VAR "X2"]),Fun ("f1",["X4"],ADD (VAR "X0") (APP "f2" [VAR "X4",VAR "X0",VAR "X1",VAR "X2",VAR "X5"])),Fun ("f2",["X5"],ADD (APP "f4" [VAR "X1",VAR "X5",VAR "X6",VAR "X2",VAR "X0",VAR "X1"]) (APP "f3" [VAR "X0",VAR "X2",VAR "X7",VAR "X0",VAR "X1"])),Fun ("f4",["X6"],ADD (VAR "X6") (APP "f3" [VAR "X5",VAR "X2",VAR "X7",VAR "X0",VAR "X1"])),Fun ("f3",["X7"],APP "f5" [VAR "X2",VAR "X7",VAR "X8",VAR "X0",VAR "X1",VAR "X2"]),Fun ("f5",["X8"],MUL (VAR "X8") (APP "f1" [VAR "X7",VAR "X4",VAR "X0",VAR "X1",VAR "X2"]))]

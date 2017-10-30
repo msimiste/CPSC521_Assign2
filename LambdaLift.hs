@@ -21,7 +21,10 @@ lambdaLift prog = table where
     (alphaFuncs, callGraph) = produceCallGraph prog
     table1 = lambdaFunctions (([],callGraph), alphaFuncs)
     table2 = updateVars table1
-    table = removeArgs table2
+    (ffs,cg) = removeArgs table2
+    functions = fixArgs ffs
+    table = (functions, cg)
+   
 
 removeArgs:: Table -> Table
 removeArgs (ffList, cg) = outTable where
@@ -262,7 +265,9 @@ getAllFreeVars (f:ffs) = freeVars where
 --    list = case (l `elem` list1) of 
 --        True -> parseVarsDouble list1 list2
 --        False -> parseVarsDouble list1 (l:list2)
-        
+fixArgs:: [FinalFunction] -> [FinalFunction]
+fixArgs ffList = outList where
+    outList = map (\(name, args, vars) -> (name, args ++ (vars \\ args), vars)) ffList
 parseVars:: [String] -> [String]
 parseVars [] = []
 parseVars [c] = [c]
