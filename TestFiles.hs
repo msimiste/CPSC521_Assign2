@@ -4,7 +4,7 @@ module TestFiles where
 import AST
 import AlphaRename
 
-fun1 = (Prog [Fun ("main",["x","y","a","b"],(COND (Lt (VAR "a") (VAR "b")) (VAR "x") (VAR "y") ))])
+fun1 = (Prog [Fun ("f1",["x","y","a","b"],(ADD (APP "f1" [VAR "y"])(APP "f2" [VAR "t"])))])
 
 fun6 = (Prog [Fun ("main", ["x","y","a","b"], (LET [Fun ("t1", ["a"], (ADD (VAR "a") (VAR "y")))] (SUB (VAR "x")(VAR "b"))))])
  

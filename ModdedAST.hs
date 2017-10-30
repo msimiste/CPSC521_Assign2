@@ -7,166 +7,123 @@ import AST
 import Data.List
 import Data.Maybe
 import TestFiles
+import ParseProg
 
 
 
 
-modAST:: (Prog String String) -> (Prog String String)
-modAST prog = Prog outFunctions where
+modAST:: (Prog String String) ->  (Prog String String)
+modAST prog =  Prog outFunctions where
     table = lambdaLift prog
     (functions, callG) = produceCallGraph prog
-    (outTable, outFunctions) = modListOfFuncs (table,functions,[])
+    outFunctions = modListOfFuncs (table,functions,[])
     
-    
-    
-modListOfFuncs:: (Table, [Fun String String], [Fun String String]) -> (Table, [Fun String String])
-modListOfFuncs (tableT,[], list) = (tableT,list)
-modListOfFuncs (tableT, (f:funcs), list) = (table, functions) where
-    (cg1, funcs1) = modFunc (tableT, f, list)
-    (cg2, funcs2) = modListOfFuncs (cg1, funcs, funcs1)
-    (table, functions) = (cg2, funcs1 ++ funcs2)   
-    
-    
-modFunc:: (Table, (Fun String String), [Fun String String]) -> (Table, [Fun String String])
-modFunc (tableT, (Fun (name,args, exp)), list) = case (exp) of
-    LET funs exp -> (tableT, (fun:list)git ) where
-        (tb, functions) = (modListOfFuncs (tableT,funs,(fun:list)))  --(tableT, (fun:list))where
-        fun = (Fun (name,args,exp))
-         --(t2,functions) = modListOfFuncs (tableT, funs, list)   
-         --fun = (Fun (name,args,exp))
-         
-    APP n exps -> (tableT,functions) where
-        addedList = addExpressions (tableT,n)
-        functions = ((Fun (name, args, (APP n (exps ++ addedList)))):list)
-    
-    _ -> (tableT, ((Fun (name, args, exp))):list)
-   
+modListOfFuncs:: (Table, [Fun String String], [Fun String String]) -> [Fun String String]
+modListOfFuncs (tableT,[], list) = list
+modListOfFuncs (tableT, (f:funcs), list) = functions where
+    funcs1 = modFunc (tableT, f, list)
+    funcs2 = modListOfFuncs (tableT, funcs, funcs1)
+    functions = funcs2   
 
-     
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-    --(table,function) where
-    --(table, function, exp1) = modExpression (tableT, exp)
-    --function = (Fun (name,args, exp1)) 
-        
-        
---modExpression:: (Table, Fun String String , Exp String String, ) -> (Table, Fun String String, Exp String String)
---modExpression (tableT, func, exp) = case exp of 
-
-    --LET funcs exp1 -> (table, outFunc, expression1) where
-      --(cg1, fcns) = modListOfFuncs (tableT, funcs) 
-      --(table, outFunc, expression1) = modExpression(cg1, func, exp1)
-                    
-        ----(table, expression) = modExpression (cg2, exp1)        
-        
-    --APP name exps ->  (tableT, APP name expressions) where
-        --addedList = addExpressions (table,name)
-        --(table, (expressions)) = modListOfExpressions (tableT, (exps ++ addedList))
-                
-    --VAR exp1 -> (tableT, func, VAR exp)       
-     
-    --ADD exp1 exp2 -> (table, outFunc, expression) where
-          --(cg1, outFunc1, expression1) = modExpression (tableT, func, exp1)
-          --(table, outFunc, expression) = modExpression (cg1, outFunc1, exp2)
-          
-    --SUB exp1 exp2 -> (table, outFunc, expression) where
-        --(cg1, outFunc1, expression1) = modExpression (tableT, func, exp1)
-        --(table, outFunc, expression) = modExpression (cg1, outFunc1, exp2)
+modLetFuncs:: (Table, [Fun String String]) -> [Fun String String]
+modLetFuncs (table, []) = []
+modLetFuncs (table, (f:fs)) = funcs where
+        fun = modFunc (table, f, [])
+        (funs) = modLetFuncs (table, fs)
+        funcs = (fun ++ funs)
     
-    --MUL exp1 exp2 -> (table, outFunc, expression) where
-        --(cg1, outFunc1, expression1) = modExpression (tableT, func, exp1)
-        --(table, outFunc, expression) = modExpression (cg1, outFunc1, exp2)
-    
-    --DIV exp1 exp2 -> (table, outFunc, expression) where
-        --(cg1,outFunc1 expression1) = modExpression (tableT, func, exp1)
-        --(table, outFunc, expression) = modExpression (cg1, outFunc1, exp2)
-    
-    --NEG exp1 -> (table, outFunc, expression) where
-        --(table, outFunc, expression) = modExpression (tableT, func, exp1)
-        
-    --CONST exp1 -> (tableT, exp)     
-
-    --COND bexp1 exp1 exp2 -> (table, outFunc, expression)  where
-        --(cg1, outFunc1, bexpress1) = modBexpression (tableT, func, bexp1)
-        --(cg2, outFunc2, express1) = modExpression (cg1, outFunc1, exp1)
-        --(table,outFunc expression) =  modExpression (cg2, outFunc2, exp1)
-  
-  
---modBexpression:: (Table, Fun String String,  BExp String String) -> (Table, Fun String String, BExp String String)
---modBexpression (tableT, func, exp) = case (exp) of
-
-    --Lt exp1 exp2  -> (table, outFunc, Lt expression1 expression) where
-        --(cg1, outFunc1, expression1) = modExpression (tableT, func, exp1)
-        --(table, outFunc, expression) = modExpression (cg1, outFunc1, exp2)         
-        
-    --Gt exp1 exp2  -> (table, outFunc, Gt  expression1 expression) where
-        --(cg1, outFunc1, expression1) = modExpression (tableT, func, exp1)
-        --(table, outFunc, expression) = modExpression (cg1, outFunc1, exp2)
-        
-    --Eq exp1 exp2  -> (table, outFunc, Eq  expression1 expression) where
-        --(cg1, outFunc1, expression1) = modExpression (tableT, func, exp1)
-        --(table, outFunc, expression) = modExpression (cg1, outFunc1, exp2)
-        
-    --OR bexp1 bexp2  -> (table, outFunc, OR  expression1 expression) where
-        --(cg1, outFunc1, expression1) = modBexpression (tableT, func,bexp1)
-        --(table, outFunc, expression) = modBexpression (cg1, outFunc1, bexp2)
-        
-    --AND bexp1 bexp2  -> (table, outFunc, AND  expression1 expression) where
-            --(cg1, outFunc1, expression1) = modBexpression (tableT, func, bexp1)
-            --(table,outFunc expression) = modBexpression (cg1, outFunc1, bexp2)
-        
-    --NOT bexp1 -> (table, outFunc, NOT expression) where
-            --(table, outFunc, expression) = modBexpression (tableT,func, bexp1)                             
-          
-    --TRUE  -> (tableT, outFunc, TRUE)    
-    --FALSE -> (tableT, outFunc, FALSE)
+modFunc:: (Table, (Fun String String), [Fun String String]) -> [Fun String String]
+modFunc (tableT, (Fun (name,args,exp)), list) = ((Fun (name,args,expression)):functions) where
+    (expression, functions) = modFuncExpression (tableT,exp)
  
---modListOfExpressions:: (Table, [Exp String String]) -> (Table, [Exp String String])
---modListOfExpressions (tableT, []) = (tableT,[])
---modListOfExpressions (tableT, (e:exps)) = (table,expressions) where
---    (cg1, exp1) = modExpression (tableT, e)
---    (cg2, exprs) = modListOfExpressions (cg1,exps)
---    (table, expressions) = (cg2,((exp1):exprs))    
+modFuncExpression:: (Table, (Exp String String)) -> ((Exp String String), [Fun String String])
+modFuncExpression (table, expr) = case expr of
+    
+    LET funs exp1 -> (expression,(f ++ functions1)) where
+            (functions1) = modLetFuncs (table, funs)
+            (expression, f) = modFuncExpression (table, exp1)
+   
+    APP n exps -> ((APP n exprs) ,[]) where
+            addedList = addExpressions (table,n)        
+            exprs = (exps ++ addedList)
+            
+    VAR exp1 -> (VAR exp1, [])  
+        
+    ADD exp1 exp2 -> ((ADD expression1 expression2), list) where
+            (expression1, l1) = modFuncExpression (table, exp1)
+            (expression2, l2) = modFuncExpression (table, exp2)
+            list = l1 ++ l2
+       
+    SUB exp1 exp2 -> ((SUB expression1 expression2), list) where
+            (expression1, l1) = modFuncExpression (table, exp1)
+            (expression2, l2) = modFuncExpression (table, exp2)
+            list = l1 ++ l2
+        
+    MUL exp1 exp2 -> ((DIV expression1 expression2), list) where
+            (expression1, l1) = modFuncExpression (table, exp1)
+            (expression2, l2) = modFuncExpression (table, exp2)
+            list = l1 ++ l2
+        
+    DIV exp1 exp2 -> ((DIV expression1 expression2), list) where
+            (expression1, l1) = modFuncExpression (table, exp1)
+            (expression2, l2) = modFuncExpression (table, exp2) 
+            list = l1 ++ l2
+            
+    NEG exp1 -> (NEG expression1, list) where
+            (expression1, list) = modFuncExpression (table, exp1)            
+        
+    CONST exp1 -> ((CONST exp1) , [])
+        
+    COND bexp1 exp1 exp2 -> ((COND bexpress express1 express2), list) where
+            (bexpress,l1) = modFuncBexpression (table, bexp1)
+            (express1,l2) = modFuncExpression (table, exp1)
+            (express2,l3) = modFuncExpression (table, exp2)
+            list = l1 ++ l2 ++ l3
+        
+modFuncBexpression:: (Table, (BExp String String)) -> ((BExp String String), [Fun String String])
+modFuncBexpression (table, bexpr) = case bexpr of
+    
+    Lt exp1 exp2  -> (Lt expression1 expression2, list) where
+        (expression1, l1) = modFuncExpression (table, exp1)
+        (expression2, l2) = modFuncExpression (table, exp2)
+        list = l1 ++ l2
+    Gt exp1 exp2  -> (Lt expression1 expression2, list) where
+        (expression1, l1) = modFuncExpression (table, exp1)
+        (expression2, l2) = modFuncExpression (table, exp2)
+        list = l1 ++ l2
+    Eq exp1 exp2  -> (Lt expression1 expression2, list) where
+        (expression1, l1) = modFuncExpression (table, exp1)
+        (expression2, l2) = modFuncExpression (table, exp2)
+        list = l1 ++ l2
+
+    AND bexp1 bexp2 -> ((AND bexpression1 bexpression2), list) where
+        (bexpression1, l1) = modFuncBexpression (table, bexp1)
+        (bexpression2, l2) = modFuncBexpression (table, bexp2)
+        list = l1 ++ l2        
+    
+    OR bexp1 bexp2 -> ((OR bexpression1 bexpression2), list) where
+        (bexpression1, l1) = modFuncBexpression (table, bexp1)
+        (bexpression2, l2) = modFuncBexpression (table, bexp2)
+        list = l1 ++ l2
+        
+    NOT bexp1 -> ((NOT bexpression1), list) where
+        ((bexpression1), list) = modFuncBexpression (table, bexp1) 
+
+    TRUE -> (TRUE, [])
+    FALSE -> (FALSE, [])
+    
         
 addExpressions::(Table, String) -> [Exp String String]
-addExpressions ((ffs,callG), name) = vars where
+addExpressions ((ffs,callG), name) = convertVars vars1 where
     (n,args,vars1) = getFFItem name ffs 
-    vars = convertVars vars1
+    --vars = convertVars vars1
     
 convertVars:: [String] -> [Exp String String]
 convertVars list = map (\v -> VAR v) list
+
+
+
+
+
+
+
