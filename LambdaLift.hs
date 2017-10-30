@@ -10,7 +10,7 @@ import TestFiles
 type FreeVars = [String]
 type Arguments = [String]
 type Name = String
-f
+
 type FinalFunction = (Name, Arguments,FreeVars)
 
 type Table = ([FinalFunction],CallGraph)
@@ -234,7 +234,7 @@ updateFFVars inFF ffList = outFF where
         
 getAllFreeVars:: [FinalFunction] -> [String]
 getAllFreeVars [] = []
-getAllFreeVars (f:ffs) = var1 where
+getAllFreeVars (f:ffs) = freeVars where
     var1 = extractVars f
     var2 = getAllFreeVars ffs
     freeVars =  (var1 ++ var2)
