@@ -29,7 +29,7 @@ modListOfFuncs (tableT, (f:funcs), list) = (table, functions) where
     
 modFunc:: (Table, (Fun String String), [Fun String String]) -> (Table, [Fun String String])
 modFunc (tableT, (Fun (name,args, exp)), list) = case (exp) of
-    LET funs exp -> (tableT, (fun:list)) where
+    LET funs exp -> (tableT, (fun:list)git ) where
         (tb, functions) = (modListOfFuncs (tableT,funs,(fun:list)))  --(tableT, (fun:list))where
         fun = (Fun (name,args,exp))
          --(t2,functions) = modListOfFuncs (tableT, funs, list)   
