@@ -10,7 +10,7 @@ import TestFiles
 type FreeVars = [String]
 type Arguments = [String]
 type Name = String
-
+f
 type FinalFunction = (Name, Arguments,FreeVars)
 
 type Table = ([FinalFunction],CallGraph)
@@ -187,7 +187,85 @@ getTableNames:: Table -> [String]
 getTableNames (ffList, cList) = map (\(name,_,_) -> name) ffList
 
 
+--Table Compare Section
+tableCompare:: Table -> Table -> Bool
+tableCompare table1 table2 = (table1 == table2)
 
+updateVars:: Table -> Table
+updateVars inTable = outTable where
+    tempTable = updateFinalFunctions inTable
+    outTable = case (tempTable == inTable) of
+        True -> tempTable
+        False -> updateVars tempTable
+       
+    
+updateFinalFunctions:: Table -> Table
+updateFinalFunctions inTable = outTable where
+    finals = updateFinals ffs inTable    
+    (ffs,callG) = inTable
+    outTable = (finals,callG)
+  
+updateFinals:: [FinalFunction] -> Table -> [FinalFunction]
+updateFinals []  tbl = []
+updateFinals (f:ffs) inTable = functions where
+    func1 = updateFinalFunction f inTable
+    funcs1 = updateFinals ffs inTable
+    functions = (func1:funcs1)
+   
+updateFinalFunction:: FinalFunction -> Table -> FinalFunction
+updateFinalFunction inFF inTable = finalOut where
+    funcsThatICall = getFuncsIcall name callG
+    finalFuncsThatICall = map (\n -> getFFItem n ffs ) funcsThatICall
+    finalOut = updateFFVars inFF finalFuncsThatICall 
+    (ffs, callG) = inTable
+    (name,args,freeVars) = inFF
+    
+getFuncsIcall:: String -> CallGraph -> [String]
+getFuncsIcall name callG = funcs where
+    index = getGraphIndex name callG
+    (nm,funcs) = callG !! index
+
+updateFFVars:: FinalFunction -> [FinalFunction] -> FinalFunction
+updateFFVars inFF ffList = outFF where
+        outFF = (name, args, freeVars)
+        (name,args,frees) = inFF
+        freeVars1 = getAllFreeVars ffList
+        freeVars = parseVars (frees ++ freeVars1)
+        
+getAllFreeVars:: [FinalFunction] -> [String]
+getAllFreeVars [] = []
+getAllFreeVars (f:ffs) = var1 where
+    var1 = extractVars f
+    var2 = getAllFreeVars ffs
+    freeVars =  (var1 ++ var2)
+
+--parseVarsDouble:: [String] -> [String] -> [String]
+--parseVarsDouble [] [] = []
+--parseVarsDouble a [] = oarseVarsSingle a
+--parseVarsDouble [] a = parseVarsSingle a
+--parseVarsDouble (l:list1) (list2) = list where
+--    list = case (l `elem` list1) of 
+--        True -> parseVarsDouble list1 list2
+--        False -> parseVarsDouble list1 (l:list2)
+        
+parseVars:: [String] -> [String]
+parseVars [] = []
+parseVars [c] = [c]
+parseVars (l:list1) = l:(parseVars (filter (/= l) list1))  -- case (l `elem` list1) of
+    --True -> parseVarsSingle list1
+    --False -> l:(parseVarsSingle list1)
+
+extractVars:: FinalFunction -> [String]
+extractVars (name,args,vars) = filter (`notElem` args) vars
+--varsOut where
+--    varsOut = map(\var -> case (var `elem` args) of
+--        True -> ""
+--        False -> var) vars
+    
+--flatten( map (\(nm,list) -> case (name == nm) of 
+--    True -> list
+--    False -> []) callG)
+            
 --
 --
 ----start::
